@@ -1,0 +1,10 @@
+{
+  "name": "CONSTANTE — Control de Hábitos & Bitácora de Voz",
+  "description": "Planilla editorial de control de hábitos mensual, estadísticas y diario personal con transcripción de audio inteligente.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

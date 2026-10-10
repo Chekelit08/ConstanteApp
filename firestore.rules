@@ -1,0 +1,119 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Validation helpers
+    function isValidUser(data, userId) {
+      return data.uid == userId &&
+        (!('email' in data) || (data.email is string && data.email.size() <= 256)) &&
+        (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 128));
+    }
+
+    function isValidHabit(data, userId) {
+      return data.userId == userId &&
+        data.id is string && data.id.size() <= 128 &&
+        data.name is string && data.name.size() > 0 && data.name.size() <= 120 &&
+        data.type in ['boolean', 'counter', 'duration'] &&
+        data.frequencyType in ['daily', 'specific_days', 'times_per_week'] &&
+        data.status in ['active', 'paused', 'archived'] &&
+        (!('description' in data) || (data.description is string && data.description.size() <= 300)) &&
+        (!('emoji' in data) || (data.emoji is string && data.emoji.size() <= 10)) &&
+        (!('color' in data) || (data.color is string && data.color.size() <= 30)) &&
+        (!('category' in data) || (data.category is string && data.category.size() <= 50));
+    }
+
+    function isValidHabitLog(data, userId) {
+      return data.userId == userId &&
+        data.id is string && data.id.size() <= 128 &&
+        data.date is string && data.date.size() <= 10 &&
+        (!('notes' in data) || (data.notes is string && data.notes.size() <= 500));
+    }
+
+    function isValidJournalEntry(data, userId) {
+      return data.userId == userId &&
+        data.id is string && data.id.size() <= 128 &&
+        data.date is string && data.date.size() <= 10 &&
+        (!('status' in data) || data.status in ['idle', 'transcribing', 'completed', 'error']) &&
+        (!('additionalNote' in data) || (data.additionalNote is string && data.additionalNote.size() <= 1000)) &&
+        (!('summary' in data) || (data.summary is string && data.summary.size() <= 500));
+    }
+
+    function isValidUserSettings(data, userId) {
+      return data.userId == userId &&
+        data.id is string && data.id.size() <= 128 &&
+        (!('theme' in data) || data.theme in ['light', 'dark', 'system']) &&
+        (!('accentColor' in data) || (data.accentColor is string && data.accentColor.size() <= 30)) &&
+        (!('journalPin' in data) || (data.journalPin is string && data.journalPin.size() <= 10)) &&
+        (!('geminiApiKey' in data) || (data.geminiApiKey is string && data.geminiApiKey.size() <= 200));
+    }
+
+    // User root document
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(incoming(), userId);
+      allow update: if isOwner(userId) && isValidUser(incoming(), userId) && incoming().uid == existing().uid;
+      allow delete: if isOwner(userId);
+
+      // User habits
+      match /habits/{habitId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(habitId) && isValidHabit(incoming(), userId);
+        allow update: if isOwner(userId) && isValidId(habitId) && isValidHabit(incoming(), userId) && incoming().userId == existing().userId;
+        allow delete: if isOwner(userId) && isValidId(habitId);
+      }
+
+      // User daily logs
+      match /logs/{logId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(logId) && isValidHabitLog(incoming(), userId);
+        allow update: if isOwner(userId) && isValidId(logId) && isValidHabitLog(incoming(), userId) && incoming().userId == existing().userId;
+        allow delete: if isOwner(userId) && isValidId(logId);
+      }
+
+      // Voice Journal entries
+      match /entries/{entryId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(entryId) && isValidJournalEntry(incoming(), userId);
+        allow update: if isOwner(userId) && isValidId(entryId) && isValidJournalEntry(incoming(), userId) && incoming().userId == existing().userId;
+        allow delete: if isOwner(userId) && isValidId(entryId);
+      }
+
+      // User Settings
+      match /settings/{settingId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(settingId) && isValidUserSettings(incoming(), userId);
+        allow update: if isOwner(userId) && isValidId(settingId) && isValidUserSettings(incoming(), userId) && incoming().userId == existing().userId;
+        allow delete: if isOwner(userId) && isValidId(settingId);
+      }
+    }
+  }
+}

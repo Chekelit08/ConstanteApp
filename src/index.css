@@ -1,0 +1,145 @@
+@import "tailwindcss";
+
+@theme {
+  --color-app: var(--bg-app);
+  --color-surface: var(--bg-surface);
+  --color-surface-elevated: var(--bg-surface-elevated);
+  --color-surface-muted: var(--bg-surface-muted);
+
+  --color-border-app: var(--border-app);
+  --color-border-subtle: var(--border-subtle);
+
+  --color-main: var(--text-main);
+  --color-muted: var(--text-muted);
+  --color-dim: var(--text-dim);
+
+  --color-accent: var(--color-accent);
+  --color-accent-contrast: var(--color-accent-contrast);
+  --color-accent-subtle: var(--color-accent-subtle);
+}
+
+:root {
+  /* Papel blanco hueso editorial auténtico */
+  --bg-app: #F8F8F5;
+  --bg-surface: #FFFFFF;
+  --bg-surface-elevated: #F0F0EA;
+  --bg-surface-muted: #E6E6DE;
+
+  /* Líneas finas impresas */
+  --border-app: #D8D8CE;
+  --border-subtle: #EBEBE2;
+
+  /* Tinta negra */
+  --text-main: #141412;
+  --text-muted: #5C5C54;
+  --text-dim: #8F8F85;
+
+  /* Acento activo */
+  --color-accent: #E11D48;
+  --color-accent-contrast: #FFFFFF;
+  --color-accent-subtle: rgba(225, 29, 72, 0.12);
+}
+
+[data-theme="dark"],
+html.dark,
+.dark {
+  /* Modo oscuro: Tinta carbón */
+  --bg-app: #121211;
+  --bg-surface: #191918;
+  --bg-surface-elevated: #232321;
+  --bg-surface-muted: #2E2E2A;
+
+  --border-app: #33332E;
+  --border-subtle: #272723;
+
+  --text-main: #F5F5F0;
+  --text-muted: #A3A398;
+  --text-dim: #73736A;
+
+  --color-accent: #E11D48;
+  --color-accent-contrast: #FFFFFF;
+  --color-accent-subtle: rgba(225, 29, 72, 0.22);
+}
+
+/* Semantics helper classes */
+.bg-app { background-color: var(--bg-app); }
+.bg-surface { background-color: var(--bg-surface); }
+.bg-surface-elevated { background-color: var(--bg-surface-elevated); }
+.bg-surface-muted { background-color: var(--bg-surface-muted); }
+
+.border-app { border-color: var(--border-app); }
+.border-subtle { border-color: var(--border-subtle); }
+
+.text-main { color: var(--text-main); }
+.text-muted { color: var(--text-muted); }
+.text-dim { color: var(--text-dim); }
+
+.bg-accent { background-color: var(--color-accent) !important; }
+.text-accent { color: var(--color-accent) !important; }
+.border-accent { border-color: var(--color-accent) !important; }
+.bg-accent-subtle { background-color: var(--color-accent-subtle) !important; }
+.text-accent-contrast { color: var(--color-accent-contrast) !important; }
+
+html, body {
+  background-color: var(--bg-app);
+  color: var(--text-main);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  transition: background-color 150ms ease, color 150ms ease;
+  min-height: 100%;
+}
+
+/* Custom Print Styles for Authentic Printed Paper Sheet */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 8pt;
+  }
+
+  aside, nav, header, button, .print\:hidden {
+    display: none !important;
+  }
+
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  table {
+    border: 1.5px solid #000000 !important;
+    border-collapse: collapse !important;
+    width: 100% !important;
+  }
+
+  th, td {
+    border: 1px solid #000000 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+}
+
+/* Subtle scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(140, 140, 140, 0.3);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(140, 140, 140, 0.5);
+}

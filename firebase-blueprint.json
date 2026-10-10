@@ -1,0 +1,127 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User account information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 256 },
+        "displayName": { "type": "string", "maxLength": 128 },
+        "photoURL": { "type": "string", "maxLength": 1024 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["uid"]
+    },
+    "Habit": {
+      "title": "Habit",
+      "description": "A single habit tracked by the user",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 120 },
+        "description": { "type": "string", "maxLength": 300 },
+        "emoji": { "type": "string", "maxLength": 10 },
+        "color": { "type": "string", "maxLength": 30 },
+        "category": { "type": "string", "maxLength": 50 },
+        "type": { "type": "string", "enum": ["boolean", "counter", "duration"] },
+        "targetValue": { "type": "number" },
+        "targetUnit": { "type": "string", "maxLength": 20 },
+        "frequencyType": { "type": "string", "enum": ["daily", "specific_days", "times_per_week"] },
+        "specificDays": { "type": "array" },
+        "timesPerWeek": { "type": "number" },
+        "startDate": { "type": "string", "maxLength": 10 },
+        "endDate": { "type": "string", "maxLength": 10 },
+        "isNegative": { "type": "boolean" },
+        "reminderTime": { "type": "string", "maxLength": 10 },
+        "status": { "type": "string", "enum": ["active", "paused", "archived"] },
+        "sortOrder": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "name", "type", "frequencyType", "status"]
+    },
+    "HabitLog": {
+      "title": "HabitLog",
+      "description": "Daily status of habits for a specific date (YYYY-MM-DD)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "date": { "type": "string", "maxLength": 10 },
+        "values": { "type": "object" },
+        "notes": { "type": "string", "maxLength": 500 },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "date"]
+    },
+    "JournalEntry": {
+      "title": "JournalEntry",
+      "description": "Daily voice journal entry with audio and transcription",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "date": { "type": "string", "maxLength": 10 },
+        "audioData": { "type": "string" },
+        "audioMimeType": { "type": "string", "maxLength": 50 },
+        "durationSeconds": { "type": "number" },
+        "transcriptOriginal": { "type": "string" },
+        "transcriptEdited": { "type": "string" },
+        "status": { "type": "string", "enum": ["idle", "transcribing", "completed", "error"] },
+        "mood": { "type": "number" },
+        "score": { "type": "number" },
+        "tags": { "type": "array" },
+        "additionalNote": { "type": "string", "maxLength": 1000 },
+        "summary": { "type": "string", "maxLength": 500 },
+        "recordedAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "date"]
+    },
+    "UserSettings": {
+      "title": "UserSettings",
+      "description": "User preferences and configuration",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "theme": { "type": "string", "enum": ["light", "dark", "system"] },
+        "accentColor": { "type": "string", "maxLength": 30 },
+        "firstDayOfWeek": { "type": "number" },
+        "notificationsEnabled": { "type": "boolean" },
+        "reminderTime": { "type": "string", "maxLength": 10 },
+        "journalPin": { "type": "string", "maxLength": 10 },
+        "hasPin": { "type": "boolean" },
+        "autoAiSummary": { "type": "boolean" },
+        "geminiApiKey": { "type": "string", "maxLength": 200 },
+        "customCategories": { "type": "array" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "userId"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile document"
+    },
+    "/users/{userId}/habits/{habitId}": {
+      "schema": "Habit",
+      "description": "User habit configurations"
+    },
+    "/users/{userId}/logs/{logId}": {
+      "schema": "HabitLog",
+      "description": "Daily logs for habits"
+    },
+    "/users/{userId}/entries/{entryId}": {
+      "schema": "JournalEntry",
+      "description": "Voice journal entries with transcripts"
+    },
+    "/users/{userId}/settings/{settingId}": {
+      "schema": "UserSettings",
+      "description": "User settings"
+    }
+  }
+}

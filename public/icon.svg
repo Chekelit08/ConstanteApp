@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="96" fill="#111111"/>
+  <!-- Minimalist Editorial Grid Stamp -->
+  <rect x="72" y="72" width="368" height="368" rx="24" fill="none" stroke="#F5F5F0" stroke-width="12" stroke-opacity="0.25"/>
+  
+  <!-- Subtle Grid lines -->
+  <line x1="72" y1="194" x2="440" y2="194" stroke="#F5F5F0" stroke-width="4" stroke-opacity="0.15"/>
+  <line x1="72" y1="316" x2="440" y2="316" stroke="#F5F5F0" stroke-width="4" stroke-opacity="0.15"/>
+  <line x1="194" y1="72" x2="194" y2="440" stroke="#F5F5F0" stroke-width="4" stroke-opacity="0.15"/>
+  <line x1="316" y1="72" x2="316" y2="440" stroke="#F5F5F0" stroke-width="4" stroke-opacity="0.15"/>
+  
+  <!-- Letter C + Check + Pulse in Carmen Accent -->
+  <path d="M 230 140 H 150 C 120 140 100 160 100 190 V 322 C 100 352 120 372 150 372 H 230" fill="none" stroke="#E11D48" stroke-width="26" stroke-linecap="round"/>
+  
+  <!-- Stylized Voice Pulse & Check -->
+  <circle cx="316" cy="194" r="14" fill="#E11D48"/>
+  <circle cx="376" cy="194" r="8" fill="#F5F5F0" fill-opacity="0.7"/>
+  <circle cx="256" cy="194" r="8" fill="#F5F5F0" fill-opacity="0.7"/>
+  
+  <!-- Clean Editorial Check Stamp -->
+  <path d="M 230 280 L 290 340 L 410 210" fill="none" stroke="#F5F5F0" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
