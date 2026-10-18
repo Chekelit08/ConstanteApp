@@ -9,3 +9,6 @@ coverage/
 
 # Datos personales del Sistema de Vida (no se suben al repo)
 src/services/personalSeed.ts
+
+# Netlify
+.netlify
