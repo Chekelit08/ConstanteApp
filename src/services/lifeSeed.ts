@@ -246,3 +246,22 @@ export function createSeededLifeStore(): LifeStore {
     habits: toRecord(SEED_HABITS),
   };
 }
+
+/** Store completo a partir de datos personales (se usa al desbloquear la bóveda cifrada) */
+export function createPersonalStore(p: PersonalSeed): LifeStore {
+  const base = createEmptyLifeStore();
+  return {
+    ...base,
+    financeConfig: p.financeConfig || base.financeConfig,
+    purpose: p.purpose || base.purpose,
+    prefs: { ...base.prefs, name: p.name || base.prefs.name },
+    goals: toRecord(p.goals || []),
+    debts: toRecord(p.debts || []),
+    events: toRecord(p.events || []),
+    tasks: toRecord(p.tasks || []),
+    books: toRecord(p.books || []),
+    people: toRecord(p.people || []),
+    letters: toRecord(p.letters || []),
+    habits: toRecord(p.planHabits || GENERIC_HABITS),
+  };
+}

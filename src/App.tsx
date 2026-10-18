@@ -26,6 +26,8 @@ import { ToastProvider } from './components/Toast';
 import { FocusProvider, formatClock, useFocus } from './components/FocusContext';
 import { QuickAdd } from './components/QuickAdd';
 import { MindfulPause } from './components/MindfulPause';
+import { UnlockScreen } from './components/UnlockScreen';
+import { markVaultDone, vaultPending } from './services/vault';
 import { Modal } from './components/ui';
 import { TodayView } from './views/TodayView';
 import { AgendaView } from './views/AgendaView';
@@ -108,6 +110,14 @@ function Main({ life, auth }: { life: ReturnType<typeof useLifeData>; auth: Retu
   const [pauseApp, setPauseApp] = useState<string | null>(() => new URLSearchParams(window.location.search).get('pausa'));
   const focus = useFocus();
   const habitActions = useHabitActions(life);
+  const [locked, setLocked] = useState(() => {
+    if (!vaultPending()) return false;
+    if (life.store.prefs.name) {
+      markVaultDone(); // este dispositivo ya tiene tus datos
+      return false;
+    }
+    return true;
+  });
 
   const go = useCallback((s: Section) => {
     setSection(s);
@@ -270,6 +280,8 @@ function Main({ life, auth }: { life: ReturnType<typeof useLifeData>; auth: Retu
       </Modal>
 
       <QuickAdd life={life} open={quickOpen} onClose={() => setQuickOpen(false)} onNavigate={go} />
+
+      {locked && <UnlockScreen life={life} onDone={() => setLocked(false)} />}
 
       {pauseApp && (
         <MindfulPause
