@@ -1,0 +1,6 @@
+node_modules
+dist
+.netlify
+*.local
+.DS_Store
+src/services/personalSeed.ts
