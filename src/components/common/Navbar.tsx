@@ -17,15 +17,33 @@ import {
   CalendarRange,
   Sliders,
   CheckCircle2,
+  CalendarClock,
+  Wallet,
+  GraduationCap,
+  Briefcase,
+  Hourglass,
+  Library,
+  Users,
+  Cross,
+  Compass as CompassIcon,
 } from 'lucide-react';
 import { User } from 'firebase/auth';
 import { PWAInstallButton } from './PWAInstallButton';
 
 export type MainSection =
   | 'today'
+  | 'agenda'
   | 'habits'
   | 'focus'
   | 'journal'
+  | 'university'
+  | 'work'
+  | 'finance'
+  | 'people'
+  | 'faith'
+  | 'books'
+  | 'purpose'
+  | 'time'
   | 'progress'
   | 'settings';
 
@@ -85,14 +103,28 @@ export const Navbar: React.FC<NavbarProps> = ({
     label: string;
     icon: React.ReactNode;
     shortcut: string;
+    group: string;
   }[] = [
-    { id: 'today', label: 'Hoy', icon: <CalendarCheck className="w-5 h-5" />, shortcut: 'H' },
-    { id: 'habits', label: 'Hábitos', icon: <TableProperties className="w-5 h-5" />, shortcut: 'M' },
-    { id: 'focus', label: 'Enfoque', icon: <Timer className="w-5 h-5" />, shortcut: 'T' },
-    { id: 'journal', label: 'Diario', icon: <BookOpen className="w-5 h-5" />, shortcut: 'D' },
-    { id: 'progress', label: 'Progreso', icon: <TrendingUp className="w-5 h-5" />, shortcut: 'E' },
-    { id: 'settings', label: 'Ajustes', icon: <Settings className="w-5 h-5" />, shortcut: 'A' },
+    { id: 'today', label: 'Hoy', icon: <CalendarCheck className="w-[18px] h-[18px]" />, shortcut: 'H', group: 'Día a día' },
+    { id: 'agenda', label: 'Agenda', icon: <CalendarClock className="w-[18px] h-[18px]" />, shortcut: 'C', group: 'Día a día' },
+    { id: 'habits', label: 'Hábitos', icon: <TableProperties className="w-[18px] h-[18px]" />, shortcut: 'M', group: 'Día a día' },
+    { id: 'focus', label: 'Enfoque', icon: <Timer className="w-[18px] h-[18px]" />, shortcut: 'T', group: 'Día a día' },
+    { id: 'journal', label: 'Diario', icon: <BookOpen className="w-[18px] h-[18px]" />, shortcut: 'D', group: 'Día a día' },
+    { id: 'university', label: 'Universidad', icon: <GraduationCap className="w-[18px] h-[18px]" />, shortcut: 'U', group: 'Áreas' },
+    { id: 'work', label: 'Trabajo SMV', icon: <Briefcase className="w-[18px] h-[18px]" />, shortcut: 'W', group: 'Áreas' },
+    { id: 'finance', label: 'Finanzas', icon: <Wallet className="w-[18px] h-[18px]" />, shortcut: 'F', group: 'Áreas' },
+    { id: 'people', label: 'Personas', icon: <Users className="w-[18px] h-[18px]" />, shortcut: 'R', group: 'Áreas' },
+    { id: 'faith', label: 'Fe', icon: <Cross className="w-[18px] h-[18px]" />, shortcut: 'V', group: 'Áreas' },
+    { id: 'books', label: 'Libros', icon: <Library className="w-[18px] h-[18px]" />, shortcut: 'L', group: 'Áreas' },
+    { id: 'purpose', label: 'Brújula', icon: <CompassIcon className="w-[18px] h-[18px]" />, shortcut: 'O', group: 'Rumbo' },
+    { id: 'time', label: 'Tiempo & Pantalla', icon: <Hourglass className="w-[18px] h-[18px]" />, shortcut: 'P', group: 'Rumbo' },
+    { id: 'progress', label: 'Progreso', icon: <TrendingUp className="w-[18px] h-[18px]" />, shortcut: 'E', group: 'Rumbo' },
+    { id: 'settings', label: 'Ajustes', icon: <Settings className="w-[18px] h-[18px]" />, shortcut: 'A', group: 'Rumbo' },
   ];
+
+  const drawerSections = navItems.filter(
+    (i) => !['today', 'agenda', 'finance', 'habits', 'settings', 'progress'].includes(i.id)
+  );
 
   const renderSyncStatus = () => {
     if (!user || syncStatus === 'local') {
@@ -150,9 +182,9 @@ export const Navbar: React.FC<NavbarProps> = ({
       ───────────────────────────────────────────────────────────── */}
       <aside
         aria-label="Navegación principal"
-        className="hidden md:flex flex-col w-64 lg:w-72 bg-surface border-r border-app p-6 justify-between shrink-0 select-none print:hidden h-screen sticky top-0"
+        className="hidden md:flex flex-col w-64 lg:w-72 bg-surface border-r border-app p-5 justify-between shrink-0 select-none print:hidden h-screen sticky top-0"
       >
-        <div className="space-y-6">
+        <div className="space-y-4 min-h-0 flex flex-col">
           {/* Brand Header */}
           <div className="flex items-center justify-between border-b border-app pb-5">
             <div>
@@ -174,16 +206,22 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           {/* Desktop Navigation Items */}
-          <nav className="space-y-1" aria-label="Secciones de la aplicación">
-            {navItems.map((item) => {
+          <nav className="space-y-0.5 overflow-y-auto no-scrollbar -mx-1 px-1 min-h-0" aria-label="Secciones de la aplicación">
+            {navItems.map((item, idx) => {
               const isActive = currentSection === item.id;
+              const showGroup = idx === 0 || navItems[idx - 1].group !== item.group;
               return (
                 <div key={item.id} className="space-y-0.5">
+                  {showGroup && (
+                    <div className={`px-3.5 pb-1 text-[9px] font-mono font-bold uppercase tracking-[0.2em] text-dim ${idx === 0 ? '' : 'pt-3'}`}>
+                      {item.group}
+                    </div>
+                  )}
                   <button
                     type="button"
                     onClick={() => onSelectSection(item.id)}
                     aria-current={isActive ? 'page' : undefined}
-                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition min-h-[44px] cursor-pointer ${
+                    className={`w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider transition min-h-[38px] cursor-pointer ${
                       isActive
                         ? 'bg-accent text-accent-contrast shadow-xs'
                         : 'text-muted hover:text-main hover:bg-surface-elevated'
@@ -258,7 +296,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         {/* Sidebar Footer: PWA + Sync & User */}
-        <div className="pt-4 border-t border-app space-y-3">
+        <div className="pt-3 border-t border-app space-y-2 shrink-0">
           <PWAInstallButton />
 
           <div className="p-3 rounded-xl bg-surface-elevated border border-app space-y-2">
@@ -352,86 +390,40 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* ─────────────────────────────────────────────────────────────
           MOBILE BOTTOM BAR: EXACTLY 5 BUTTONS
-          Hoy · Hábitos · Enfoque · Diario · Más
+          Hoy · Agenda · Plata · Hábitos · Más
       ───────────────────────────────────────────────────────────── */}
       <nav
         aria-label="Navegación móvil"
         className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-surface/95 backdrop-blur-md border-t border-app px-2 py-1.5 flex items-center justify-around select-none print:hidden safe-bottom"
       >
-        {/* 1. Hoy */}
-        <button
-          type="button"
-          onClick={() => {
-            onSelectSection('today');
-            setMoreDrawerOpen(false);
-          }}
-          className={`flex flex-col items-center justify-center flex-1 py-1 rounded-xl transition min-h-[44px] cursor-pointer ${
-            currentSection === 'today' && !moreDrawerOpen
-              ? 'text-accent font-bold'
-              : 'text-muted hover:text-main'
-          }`}
-        >
-          <CalendarCheck className="w-5 h-5" />
-          <span className="text-[10px] uppercase font-semibold mt-0.5 tracking-wider">Hoy</span>
-        </button>
+        {([
+          { id: 'today', label: 'Hoy', icon: <CalendarCheck className="w-5 h-5" /> },
+          { id: 'agenda', label: 'Agenda', icon: <CalendarClock className="w-5 h-5" /> },
+          { id: 'finance', label: 'Plata', icon: <Wallet className="w-5 h-5" /> },
+          { id: 'habits', label: 'Hábitos', icon: <TableProperties className="w-5 h-5" /> },
+        ] as { id: MainSection; label: string; icon: React.ReactNode }[]).map((b) => (
+          <button
+            key={b.id}
+            type="button"
+            onClick={() => {
+              onSelectSection(b.id);
+              setMoreDrawerOpen(false);
+            }}
+            className={`flex flex-col items-center justify-center flex-1 py-1 rounded-xl transition min-h-[44px] cursor-pointer ${
+              currentSection === b.id && !moreDrawerOpen ? 'text-accent font-bold' : 'text-muted hover:text-main'
+            }`}
+          >
+            {b.icon}
+            <span className="text-[10px] uppercase font-semibold mt-0.5 tracking-wider">{b.label}</span>
+          </button>
+        ))}
 
-        {/* 2. Hábitos */}
-        <button
-          type="button"
-          onClick={() => {
-            onSelectSection('habits');
-            setMoreDrawerOpen(false);
-          }}
-          className={`flex flex-col items-center justify-center flex-1 py-1 rounded-xl transition min-h-[44px] cursor-pointer ${
-            currentSection === 'habits' && !moreDrawerOpen
-              ? 'text-accent font-bold'
-              : 'text-muted hover:text-main'
-          }`}
-        >
-          <TableProperties className="w-5 h-5" />
-          <span className="text-[10px] uppercase font-semibold mt-0.5 tracking-wider">Hábitos</span>
-        </button>
-
-        {/* 3. Enfoque */}
-        <button
-          type="button"
-          onClick={() => {
-            onSelectSection('focus');
-            setMoreDrawerOpen(false);
-          }}
-          className={`flex flex-col items-center justify-center flex-1 py-1 rounded-xl transition min-h-[44px] cursor-pointer ${
-            currentSection === 'focus' && !moreDrawerOpen
-              ? 'text-accent font-bold'
-              : 'text-muted hover:text-main'
-          }`}
-        >
-          <Timer className="w-5 h-5" />
-          <span className="text-[10px] uppercase font-semibold mt-0.5 tracking-wider">Enfoque</span>
-        </button>
-
-        {/* 4. Diario */}
-        <button
-          type="button"
-          onClick={() => {
-            onSelectSection('journal');
-            setMoreDrawerOpen(false);
-          }}
-          className={`flex flex-col items-center justify-center flex-1 py-1 rounded-xl transition min-h-[44px] cursor-pointer ${
-            currentSection === 'journal' && !moreDrawerOpen
-              ? 'text-accent font-bold'
-              : 'text-muted hover:text-main'
-          }`}
-        >
-          <BookOpen className="w-5 h-5" />
-          <span className="text-[10px] uppercase font-semibold mt-0.5 tracking-wider">Diario</span>
-        </button>
-
-        {/* 5. Más */}
+        {/* Más */}
         <button
           type="button"
           onClick={() => setMoreDrawerOpen(true)}
           className={`flex flex-col items-center justify-center flex-1 py-1 rounded-xl transition min-h-[44px] cursor-pointer ${
-            moreDrawerOpen || currentSection === 'progress' || currentSection === 'settings'
+            moreDrawerOpen || !['today', 'agenda', 'finance', 'habits'].includes(currentSection)
               ? 'text-accent font-bold'
               : 'text-muted hover:text-main'
           }`}
@@ -472,6 +464,28 @@ export const Navbar: React.FC<NavbarProps> = ({
               >
                 <X className="w-5 h-5" />
               </button>
+            </div>
+
+            {/* Todas las áreas de la vida */}
+            <div className="grid grid-cols-3 gap-2 text-[11px] font-semibold uppercase tracking-wider">
+              {drawerSections.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
+                    onSelectSection(item.id);
+                    setMoreDrawerOpen(false);
+                  }}
+                  className={`p-3 rounded-2xl border text-left flex flex-col justify-between gap-1.5 min-h-[72px] cursor-pointer transition ${
+                    currentSection === item.id
+                      ? 'bg-accent text-accent-contrast border-accent'
+                      : 'bg-surface-elevated border-app text-main hover:border-accent'
+                  }`}
+                >
+                  {item.icon}
+                  <span className="leading-tight">{item.label}</span>
+                </button>
+              ))}
             </div>
 
             {/* Sub-sections */}

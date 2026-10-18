@@ -3,6 +3,7 @@ import { UserSettings, ThemeMode, ACCENT_PALETTE } from '../types/settings';
 import { Habit, HabitLog } from '../types/habit';
 import { JournalEntry } from '../types/journal';
 import { FocusSession } from '../types/focus';
+import { LifeStore } from '../types/life';
 import { ConfirmModal } from '../components/common/ConfirmModal';
 import { useThemeContext } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
@@ -57,6 +58,7 @@ interface SettingsViewProps {
   onRestoreBackup: (backup: ConstanteBackupPayload, mode: 'merge' | 'replace') => Promise<void>;
   onUndoRestore: () => boolean;
   onOpenAiTransparency: () => void;
+  lifeStore?: LifeStore;
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
@@ -71,6 +73,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   onRestoreBackup,
   onUndoRestore,
   onOpenAiTransparency,
+  lifeStore,
 }) => {
   const { themeMode, accentColor, effectiveTheme, setThemeMode, setAccentColor } = useThemeContext();
   const { showToast } = useToast();
@@ -135,7 +138,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         logs,
         entries,
         settings,
-        focusSessions
+        focusSessions,
+        [],
+        [],
+        lifeStore
       );
       downloadBackupFile(backup);
       showToast('Copia de seguridad descargada con éxito.', { type: 'success' });

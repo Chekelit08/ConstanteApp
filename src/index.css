@@ -143,3 +143,11 @@ html, body {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(140, 140, 140, 0.5);
 }
+
+/* Safe areas (iPhone) y utilidades del Sistema de Vida */
+.safe-top { padding-top: max(0.75rem, env(safe-area-inset-top)); }
+.safe-bottom { padding-bottom: max(0.375rem, env(safe-area-inset-bottom)); }
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.clamp-title { overflow-wrap: anywhere; }
+.whitespace-pre-line { white-space: pre-line; }

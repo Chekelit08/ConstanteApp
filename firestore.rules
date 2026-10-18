@@ -72,6 +72,14 @@ service cloud.firestore {
         (!('geminiApiKey' in data) || (data.geminiApiKey is string && data.geminiApiKey.size() <= 200));
     }
 
+    function isValidLifeDoc(data, userId, docId) {
+      return data.userId == userId &&
+        data.id == docId &&
+        data.kind is string && data.kind.size() > 0 && data.kind.size() <= 40 &&
+        data.itemId is string && data.itemId.size() <= 128 &&
+        'payload' in data;
+    }
+
     // User root document
     match /users/{userId} {
       allow get: if isOwner(userId);
@@ -104,6 +112,15 @@ service cloud.firestore {
         allow create: if isOwner(userId) && isValidId(entryId) && isValidJournalEntry(incoming(), userId);
         allow update: if isOwner(userId) && isValidId(entryId) && isValidJournalEntry(incoming(), userId) && incoming().userId == existing().userId;
         allow delete: if isOwner(userId) && isValidId(entryId);
+      }
+
+      // Sistema de Vida: finanzas, facu, agenda, personas, fe, brújula… (un doc por ítem)
+      match /life/{docId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(docId) && isValidLifeDoc(incoming(), userId, docId);
+        allow update: if isOwner(userId) && isValidId(docId) && isValidLifeDoc(incoming(), userId, docId) && incoming().userId == existing().userId;
+        allow delete: if isOwner(userId) && isValidId(docId);
       }
 
       // User Settings

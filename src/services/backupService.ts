@@ -13,6 +13,7 @@ import { UserSettings } from '../types/settings';
 import { FocusSession, FocusPreset, SpotifyPlaylist } from '../types/focus';
 import { getTodayDateString } from '../utils/dateUtils';
 import { exportAllMedia, importAllMedia, StoredMediaItem } from './mediaStorage';
+import { LifeStore } from '../types/life';
 
 export const BACKUP_SCHEMA_VERSION = '2.0';
 export const PREVIOUS_BACKUP_SNAPSHOT_KEY = 'constante_pre_restore_snapshot';
@@ -30,6 +31,7 @@ export interface ConstanteBackupPayload {
   focusPresets?: FocusPreset[];
   spotifyPlaylists?: SpotifyPlaylist[];
   mediaFiles?: Record<string, StoredMediaItem>;
+  life?: Partial<LifeStore>; // Sistema de Vida (finanzas, facu, agenda, personas, fe, brújula…)
 }
 
 export interface BackupValidationResult {
@@ -57,7 +59,8 @@ export async function createFullBackup(
   settings: UserSettings,
   focusSessions: FocusSession[] = [],
   focusPresets: FocusPreset[] = [],
-  spotifyPlaylists: SpotifyPlaylist[] = []
+  spotifyPlaylists: SpotifyPlaylist[] = [],
+  life?: LifeStore
 ): Promise<ConstanteBackupPayload> {
   const localToday = getTodayDateString();
 
@@ -83,6 +86,7 @@ export async function createFullBackup(
     focusPresets,
     spotifyPlaylists,
     mediaFiles,
+    life,
   };
 }
 
@@ -302,6 +306,7 @@ export function validateBackupPayload(rawData: any): BackupValidationResult {
           focusPresets: Array.isArray(rawData.focusPresets) ? rawData.focusPresets : undefined,
           spotifyPlaylists: Array.isArray(rawData.spotifyPlaylists) ? rawData.spotifyPlaylists : undefined,
           mediaFiles,
+          life: rawData.life && typeof rawData.life === 'object' && !Array.isArray(rawData.life) ? rawData.life : undefined,
         }
       : undefined,
   };

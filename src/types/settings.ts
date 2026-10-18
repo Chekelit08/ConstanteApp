@@ -32,6 +32,7 @@ export const DEFAULT_CATEGORIES = [
   'Espiritualidad & Calma',
   'Finanzas',
   'Personal & Creativo',
+  'Familia & Personas',
 ];
 
 export const ACCENT_PALETTE = [

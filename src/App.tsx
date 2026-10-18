@@ -33,6 +33,21 @@ import { handleSpotifyCallback } from './services/spotifyService';
 import { getTodayDateString } from './utils/dateUtils';
 import { isHabitScheduledOnDate, isHabitCompleted } from './services/dataStorage';
 import { Habit } from './types/habit';
+import { useLifeData } from './hooks/useLifeData';
+import { useVerseNotifier } from './services/verseNotifier';
+import { PLAN_2026_HABITS } from './services/lifeSeed';
+import { ConstanteBackupPayload } from './services/backupService';
+import { DailyDashboard } from './components/life/DailyDashboard';
+import { MindfulPause } from './components/life/MindfulPause';
+import { AgendaView } from './views/AgendaView';
+import { FinanceView } from './views/FinanceView';
+import { UniversityView } from './views/UniversityView';
+import { WorkView } from './views/WorkView';
+import { TimeView } from './views/TimeView';
+import { BooksView } from './views/BooksView';
+import { PeopleView } from './views/PeopleView';
+import { FaithView } from './views/FaithView';
+import { PurposeView } from './views/PurposeView';
 import {
   TableProperties,
   CalendarDays,
@@ -66,6 +81,9 @@ function MainAppContent() {
     undoRestore,
   } = useHabitData(user);
 
+  const life = useLifeData(user);
+  useVerseNotifier(life);
+
   const { themeMode, accentColor, setThemeMode, setAccentColor } = useThemeContext();
   
   // Navigation states
@@ -78,6 +96,24 @@ function MainAppContent() {
     return typeof window !== 'undefined' && window.innerWidth < 768 ? 'week' : 'month';
   });
   const [progressSubTab, setProgressSubTab] = useState<ProgressSubTab>('stats');
+
+  // "Pausa consciente": se abre con /?pausa=Instagram desde un atajo del iPhone
+  const [pauseApp, setPauseApp] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return new URLSearchParams(window.location.search).get('pausa');
+  });
+
+  const closePause = useCallback(() => {
+    setPauseApp(null);
+    const url = new URL(window.location.href);
+    url.searchParams.delete('pausa');
+    window.history.replaceState({}, document.title, url.pathname + url.search);
+  }, []);
+
+  // Volver arriba al cambiar de sección
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, [currentSection]);
 
   const [habitModalOpen, setHabitModalOpen] = useState(false);
   const [initialHabitFormData, setInitialHabitFormData] = useState<Partial<Habit> | null>(null);
@@ -137,6 +173,7 @@ function MainAppContent() {
 
   // Desktop keyboard shortcuts:
   // H: hoy, M: mes, S: semana, Y: año, G: gestionar, T: enfoque, D: diario, E: estadísticas, B: balance, A: ajustes
+  // C: agenda, U: universidad, W: trabajo, F: finanzas, R: personas, V: fe, L: libros, O: brújula, P: tiempo & pantalla
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ignore if modifier keys are pressed (avoids interfering with Ctrl+S, Cmd+D, etc.)
@@ -184,6 +221,24 @@ function MainAppContent() {
         setProgressSubTab('balance');
       } else if (key === 'A') {
         setCurrentSection('settings');
+      } else if (key === 'C') {
+        setCurrentSection('agenda');
+      } else if (key === 'U') {
+        setCurrentSection('university');
+      } else if (key === 'W') {
+        setCurrentSection('work');
+      } else if (key === 'F') {
+        setCurrentSection('finance');
+      } else if (key === 'R') {
+        setCurrentSection('people');
+      } else if (key === 'V') {
+        setCurrentSection('faith');
+      } else if (key === 'L') {
+        setCurrentSection('books');
+      } else if (key === 'O') {
+        setCurrentSection('purpose');
+      } else if (key === 'P') {
+        setCurrentSection('time');
       }
     };
 
@@ -268,6 +323,42 @@ function MainAppContent() {
     },
     [logs, entries, toggleHabit, saveJournalEntry, user]
   );
+
+  /** Agrega los hábitos del Plan 2026 que todavía no existen */
+  const handleImportPlanHabits = useCallback(() => {
+    const userId = user ? user.uid : 'local';
+    const existing = new Set(habits.map((h) => h.id));
+    const maxOrder = habits.reduce((m, h) => Math.max(m, h.sortOrder || 0), 0);
+    const now = new Date().toISOString();
+    let added = 0;
+    PLAN_2026_HABITS.forEach((h, idx) => {
+      if (existing.has(h.id)) return;
+      saveHabit({ ...h, userId, sortOrder: maxOrder + idx + 1, createdAt: now, updatedAt: now });
+      added++;
+    });
+    return added;
+  }, [habits, saveHabit, user]);
+
+  /** Al registrar una lectura bíblica, marca el hábito "Biblia + oración" de hoy */
+  const handleCompleteBibleHabit = useCallback(() => {
+    const bible = habits.find((h) => h.id === 'plan-biblia' && h.status === 'active');
+    if (bible && !logs[todayStr]?.values?.[bible.id]) toggleHabit(bible.id, todayStr);
+  }, [habits, logs, todayStr, toggleHabit]);
+
+  const handleResetAll = useCallback(() => {
+    resetAllData();
+    life.reset();
+  }, [resetAllData, life]);
+
+  const handleRestore = useCallback(
+    async (backup: ConstanteBackupPayload, mode: 'merge' | 'replace') => {
+      await restoreBackup(backup, mode);
+      if (backup.life) life.restore(backup.life, mode);
+    },
+    [restoreBackup, life]
+  );
+
+  const goFocus = () => setCurrentSection('focus');
 
   return (
     <div className="min-h-screen bg-app text-main flex flex-col md:flex-row antialiased font-sans">
@@ -355,6 +446,7 @@ function MainAppContent() {
           )}
 
           {/* View Router */}
+          {currentSection === 'today' && <DailyDashboard life={life} onNavigate={setCurrentSection} />}
           {currentSection === 'today' && (
             <TodayView
               habits={habits}
@@ -475,11 +567,28 @@ function MainAppContent() {
               habits={habits}
               logs={logs}
               entries={entries}
-              settings={settings}
+              settings={{
+                ...settings,
+                mission: settings.mission || life.store.purpose.mission,
+                vision: settings.vision || life.store.purpose.lifeVision,
+              }}
               onSaveSettings={saveSettings}
               onOpenCreateHabitWithData={handleOpenCreateHabitWithData}
               userId={user ? user.uid : 'local'}
             />
+          )}
+
+          {/* SISTEMA DE VIDA */}
+          {currentSection === 'agenda' && <AgendaView life={life} onOpenUniversity={() => setCurrentSection('university')} />}
+          {currentSection === 'finance' && <FinanceView life={life} />}
+          {currentSection === 'university' && <UniversityView life={life} onStartFocus={goFocus} />}
+          {currentSection === 'work' && <WorkView life={life} onStartFocus={goFocus} />}
+          {currentSection === 'time' && <TimeView life={life} />}
+          {currentSection === 'books' && <BooksView life={life} />}
+          {currentSection === 'people' && <PeopleView life={life} />}
+          {currentSection === 'faith' && <FaithView life={life} onCompleteBibleHabit={handleCompleteBibleHabit} />}
+          {currentSection === 'purpose' && (
+            <PurposeView life={life} habits={habits} logs={logs} onImportPlanHabits={handleImportPlanHabits} />
           )}
 
           {/* AJUSTES VIEW */}
@@ -491,14 +600,27 @@ function MainAppContent() {
               entries={entries}
               onSaveSettings={saveSettings}
               onLoadThreeMonthsDemo={loadThreeMonthsDemo}
-              onResetAllData={resetAllData}
-              onRestoreBackup={restoreBackup}
+              onResetAllData={handleResetAll}
+              onRestoreBackup={handleRestore}
+              lifeStore={life.store}
               onUndoRestore={undoRestore}
               onOpenAiTransparency={() => setAiModalOpen(true)}
             />
           )}
         </div>
       </main>
+
+      {pauseApp && (
+        <MindfulPause
+          app={pauseApp}
+          life={life}
+          onClose={closePause}
+          onGoFocus={() => {
+            closePause();
+            setCurrentSection('focus');
+          }}
+        />
+      )}
 
       {/* Floating Offline Notification */}
       <OfflineIndicator />
