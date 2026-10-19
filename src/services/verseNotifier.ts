@@ -3,6 +3,7 @@ import { LifeApi } from '../hooks/useLifeData';
 import { getVerseForDate, THEME_INFO, Verse } from './verses';
 import { getTodayDateString } from '../utils/dateUtils';
 import { nowTimeAR } from '../utils/lifeUtils';
+import { pushEnabledHere } from './push';
 
 /** Muestra el versículo como notificación (vía service worker si está disponible, así funciona en la PWA instalada) */
 export async function showVerseNotification(verse: Verse): Promise<boolean> {
@@ -36,7 +37,7 @@ export async function showVerseNotification(verse: Verse): Promise<boolean> {
 export function useVerseNotifier(life: LifeApi) {
   const { verseNotify, verseTime, lastVerseNotified } = life.store.prefs;
   useEffect(() => {
-    if (!verseNotify) return;
+    if (!verseNotify || pushEnabledHere()) return; // con push activo lo manda el servicio de recordatorios
     const check = async () => {
       const today = getTodayDateString();
       if (lastVerseNotified === today) return;

@@ -1,15 +1,33 @@
 import { AgendaItem, getArea, LifeStore, EVAL_TYPE_LABEL } from '../types/life';
 import { addDays, getMondayIndexedDay, parseDateString } from '../utils/dateUtils';
 import { eventOccursOn, lastSundayOfMonth, monthKey, timeToMinutes } from '../utils/lifeUtils';
+import type { FeedEvent } from './calendarFeeds';
 
 /**
  * Une en una sola agenda todo lo que tiene fecha en tu vida:
  * eventos, clases de la facu, parciales/finales, cumpleaños, tareas con vencimiento
  * y recordatorios del sistema (revisión mensual, aguinaldo).
  */
-export function getAgendaForDate(store: LifeStore, dateStr: string): AgendaItem[] {
+export function getAgendaForDate(store: LifeStore, dateStr: string, external: FeedEvent[] = []): AgendaItem[] {
   const items: AgendaItem[] = [];
   const weekday = getMondayIndexedDay(parseDateString(dateStr));
+
+  // Calendarios conectados (Google, iCloud…)
+  external.forEach((e) => {
+    items.push({
+      key: `ext-${e.feedId}-${e.uid}`,
+      date: dateStr,
+      start: e.allDay ? undefined : e.start,
+      end: e.allDay ? undefined : e.end,
+      allDay: e.allDay,
+      title: e.title,
+      subtitle: [e.location, e.feedName].filter(Boolean).join(' · '),
+      area: 'personal',
+      color: e.color,
+      emoji: e.feedId === 'feriados' ? '🇦🇷' : '📅',
+      source: 'external',
+    });
+  });
 
   // Eventos propios
   Object.values(store.events).forEach((ev) => {

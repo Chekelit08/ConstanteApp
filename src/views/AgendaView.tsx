@@ -3,6 +3,7 @@ import { CalendarDays, CalendarRange, ChevronLeft, ChevronRight, Clock, Download
 import { LifeApi } from '../hooks/useLifeData';
 import { AgendaItem, CalendarEvent, LIFE_AREAS, Task } from '../types/life';
 import { getAgendaForDate } from '../services/agenda';
+import { useCalendarFeeds } from '../services/calendarFeeds';
 import { addDays, DAY_NAMES_SHORT, formatArgentineDate, getMondayIndexedDay, getTodayDateString, getWeekDays, MONTH_NAMES, parseDateString } from '../utils/dateUtils';
 import { buildIcs, downloadTextFile, IcsEventInput, nowTimeAR, recurrenceToRrule, timeToMinutes } from '../utils/lifeUtils';
 import { btnGhost, btnPrimary, btnSecondary, Card, Chip, EmptyState, PageHeader, Tabs } from '../components/ui';
@@ -24,8 +25,9 @@ export const AgendaView: React.FC<Props> = ({ life, onOpenUniversity }) => {
   const [eventModal, setEventModal] = useState<{ open: boolean; ev?: Partial<CalendarEvent> }>({ open: false });
   const [taskModal, setTaskModal] = useState<{ open: boolean; task?: Partial<Task> }>({ open: false });
 
+  const feeds = useCalendarFeeds();
   const agendaFor = (d: string) => {
-    const items = getAgendaForDate(life.store, d);
+    const items = getAgendaForDate(life.store, d, feeds.eventsOn(d));
     return areaFilter ? items.filter((i) => i.area === areaFilter) : items;
   };
 
@@ -88,7 +90,7 @@ export const AgendaView: React.FC<Props> = ({ life, onOpenUniversity }) => {
       .forEach((p) =>
         evs.push({ uid: `bday-${p.id}`, title: `🎂 ${p.name}`, date: `${today.slice(0, 4)}-${p.birthday}`, allDay: true, rrule: 'FREQ=YEARLY' })
       );
-    downloadTextFile('constante-agenda.ics', buildIcs('CONSTANTE · Agenda', evs), 'text/calendar');
+    downloadTextFile('norte-agenda.ics', buildIcs('NORTE · Agenda', evs), 'text/calendar');
   };
 
   return (
@@ -156,7 +158,7 @@ export const AgendaView: React.FC<Props> = ({ life, onOpenUniversity }) => {
       )}
 
       <p className="text-[11px] text-dim">
-        Tip: con "Exportar .ics" llevás tu agenda (clases, parciales, eventos y cumpleaños) a Google Calendar o al Calendario del iPhone para recibir avisos aunque no abras la app.
+        Tus calendarios de Google se conectan en Ajustes → Conexiones y aparecen acá solos. Con "Exportar .ics" llevás tus clases, parciales y eventos de NORTE a Google Calendar o al Calendario del iPhone.
       </p>
 
       {eventModal.open && <EventModal open life={life} initial={eventModal.ev} onClose={() => setEventModal({ open: false })} />}

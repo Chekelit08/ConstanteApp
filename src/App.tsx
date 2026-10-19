@@ -21,6 +21,8 @@ import { useLifeData } from './hooks/useLifeData';
 import { useAuth } from './hooks/useAuth';
 import { useHabitActions } from './hooks/useHabitActions';
 import { useVerseNotifier } from './services/verseNotifier';
+import { CalendarFeedsProvider } from './services/calendarFeeds';
+import { useReminderSync } from './hooks/useReminderSync';
 import { Section, SECTIONS } from './sections';
 import { ToastProvider } from './components/Toast';
 import { FocusProvider, formatClock, useFocus } from './components/FocusContext';
@@ -91,24 +93,44 @@ const Logo: React.FC<{ size?: number }> = ({ size = 30 }) => (
   </svg>
 );
 
+function sectionFromUrl(search: string): Section | null {
+  const s = new URLSearchParams(search).get('s');
+  return SECTIONS.some((x) => x.id === s) ? (s as Section) : null;
+}
+
 function Shell() {
   const auth = useAuth();
   const life = useLifeData(auth.user);
   useVerseNotifier(life);
   useTheme(life.store.prefs.theme);
   return (
-    <FocusProvider life={life}>
-      <Main life={life} auth={auth} />
-    </FocusProvider>
+    <CalendarFeedsProvider>
+      <FocusProvider life={life}>
+        <Main life={life} auth={auth} />
+      </FocusProvider>
+    </CalendarFeedsProvider>
   );
 }
 
 function Main({ life, auth }: { life: ReturnType<typeof useLifeData>; auth: ReturnType<typeof useAuth> }) {
-  const [section, setSection] = useState<Section>('today');
+  const [section, setSection] = useState<Section>(() => sectionFromUrl(window.location.search) || 'today');
   const [quickOpen, setQuickOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [pauseApp, setPauseApp] = useState<string | null>(() => new URLSearchParams(window.location.search).get('pausa'));
   const focus = useFocus();
+  useReminderSync(life);
+
+  // tocar una notificación con la app abierta → ir a esa sección
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
+    const onMsg = (e: MessageEvent) => {
+      if (e.data?.type !== 'norte-open') return;
+      const s = sectionFromUrl(new URL(e.data.url, window.location.origin).search);
+      if (s) setSection(s);
+    };
+    navigator.serviceWorker.addEventListener('message', onMsg);
+    return () => navigator.serviceWorker.removeEventListener('message', onMsg);
+  }, []);
   const habitActions = useHabitActions(life);
   const [locked, setLocked] = useState(() => {
     if (!vaultPending()) return false;

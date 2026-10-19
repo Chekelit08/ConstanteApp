@@ -6,6 +6,7 @@ import { Section } from '../sections';
 import { SkyHero } from '../components/SkyHero';
 import { formatClock, useFocus } from '../components/FocusContext';
 import { getAgendaForDate, getUpcomingEvaluations } from '../services/agenda';
+import { useCalendarFeeds } from '../services/calendarFeeds';
 import { getVerseForDate, THEME_INFO } from '../services/verses';
 import { addDays, getTodayDateString } from '../utils/dateUtils';
 import { dayCompletion, habitsForDate, habitValue, isDone, streak, weekCount } from '../utils/habits';
@@ -36,7 +37,8 @@ export const TodayView: React.FC<Props> = ({ life, onNavigate, onOpenJournal }) 
   const comp = dayCompletion(store, today);
   const purpose = store.purpose;
 
-  const agenda = useMemo(() => getAgendaForDate(store, today).filter((i) => i.source !== 'task'), [store, today]);
+  const { eventsOn } = useCalendarFeeds();
+  const agenda = useMemo(() => getAgendaForDate(store, today, eventsOn(today)).filter((i) => i.source !== 'task'), [store, today, eventsOn]);
   const upcoming = agenda.filter((i) => !i.allDay && i.start && (i.end ? timeToMinutes(i.end) : timeToMinutes(i.start) + 60) >= nowMin);
   const allDay = agenda.filter((i) => i.allDay);
   const nowItem = upcoming.find((i) => timeToMinutes(i.start) <= nowMin);

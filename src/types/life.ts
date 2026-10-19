@@ -264,7 +264,7 @@ export interface AgendaItem {
   area: LifeArea;
   color: string;
   emoji: string;
-  source: 'event' | 'class' | 'evaluation' | 'birthday' | 'task' | 'system';
+  source: 'event' | 'class' | 'evaluation' | 'birthday' | 'task' | 'system' | 'external';
   refId?: string;
   done?: boolean;
 }
@@ -615,8 +615,38 @@ export interface LifePrefs {
   lastVerseNotified?: string; // YYYY-MM-DD
   dailyStudyGoalMinutes: number; // 3 hs = 180
   booksPerYearGoal: number; // 12
+  reminders?: ReminderPrefs;
   seedVersion: number;
 }
+
+/** Qué avisos push mandar (los minutos "antes" en 0 = apagado) */
+export interface ReminderPrefs {
+  classesLead: number;
+  eventsLead: number;
+  externalLead: number; // eventos de Google Calendar
+  evaluations: boolean; // la noche anterior y 2 h antes
+  tasks: boolean; // a la mañana del día que vencen
+  birthdays: boolean;
+  habits: boolean; // si faltan hábitos a la noche
+  habitsTime: string;
+  closeDay: boolean;
+  closeDayTime: string;
+  morningTime: string; // hora de los avisos "del día"
+}
+
+export const DEFAULT_REMINDERS: ReminderPrefs = {
+  classesLead: 15,
+  eventsLead: 30,
+  externalLead: 30,
+  evaluations: true,
+  tasks: true,
+  birthdays: true,
+  habits: true,
+  habitsTime: '21:00',
+  closeDay: true,
+  closeDayTime: '22:30',
+  morningTime: '08:30',
+};
 
 // ─────────────────────────────────────────────────────────────
 // STORE

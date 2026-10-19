@@ -6,6 +6,7 @@ import { getTodayDateString } from '../utils/dateUtils';
 import { downloadTextFile } from '../utils/lifeUtils';
 import { btnDanger, btnPrimary, btnSecondary, Card, Field, inputCls, PageHeader } from '../components/ui';
 import { useToast } from '../components/Toast';
+import { CalendarsCard, RemindersCard } from '../components/Connections';
 
 interface Props {
   life: LifeApi;
@@ -108,6 +109,14 @@ export const SettingsView: React.FC<Props> = ({ life, auth }) => {
         >
           Guardar ajustes
         </button>
+      </div>
+
+      <div className="space-y-3" id="conexiones">
+        <h2 className="font-display text-2xl font-bold text-main">Conexiones</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+          <RemindersCard life={life} />
+          <CalendarsCard />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
