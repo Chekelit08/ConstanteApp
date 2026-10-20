@@ -9,7 +9,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon.svg', 'apple-touch-icon.png'],
+      includeAssets: ['favicon.ico', 'favicon-32.png', 'favicon-64.png', 'apple-touch-icon.png'],
       manifest: {
         id: '/',
         name: 'NORTE — Tu sistema de vida',
