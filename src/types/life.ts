@@ -100,7 +100,8 @@ export interface FinanceConfig {
   usdRate: number; // cotización manual o traída de dolarapi
   usdRateSource?: string;
   usdRateUpdatedAt?: string;
-  importRules?: Record<string, ImportRule>; // lo que aprendió el importador de tus correcciones
+  importRules?: Record<string, ImportRule>;
+  scale?: ScaleConfig; // lo que aprendió el importador de tus correcciones
   salaryGoalStart: number;
   salaryGoalEnd: number;
   categoryBudgets: Record<string, number>; // tope mensual ARS por categoría de gasto
@@ -487,6 +488,95 @@ export interface VerseFavorite {
 }
 
 // ─────────────────────────────────────────────────────────────
+// CURSOS / APRENDIZAJE
+// ─────────────────────────────────────────────────────────────
+export type CourseStatus = 'por_ver' | 'viendo' | 'visto' | 'aplicado';
+
+export interface CourseAction {
+  id: string;
+  kind: 'task' | 'habit';
+  refId: string;
+  text: string;
+}
+
+export interface Course {
+  id: string;
+  title: string;
+  author?: string;
+  url?: string;
+  area: LifeArea;
+  status: CourseStatus;
+  ideas: string; // las 3 ideas clave
+  actions: CourseAction[]; // "nota → acción": un curso se cierra cuando lo aplicaste
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ─────────────────────────────────────────────────────────────
+// PLAN DEL DÍA Y REVISIONES
+// ─────────────────────────────────────────────────────────────
+export interface PlanItem {
+  id: string;
+  text: string;
+  done: boolean;
+}
+
+/** "¿Qué es lo más importante hoy?" */
+export interface DayPlan {
+  id: string; // = date
+  date: string;
+  top: string;
+  topDone: boolean;
+  others: PlanItem[]; // hasta 3
+  updatedAt: string;
+}
+
+export interface WeeklyReview {
+  id: string; // lunes de la semana revisada (YYYY-MM-DD)
+  weekStart: string;
+  wentWell: string;
+  improve: string;
+  missionRead: boolean;
+  nextFocus: string; // la prioridad de la semana que viene
+  nextGoals: { roleId: string; text: string; done: boolean }[]; // logros por rol para la semana siguiente
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type MatchState = 'ganando' | 'empatando' | 'perdiendo';
+
+export interface QuarterReview {
+  id: string; // 2026-Q4
+  quarter: string;
+  missionChange: string;
+  visionChange: string;
+  objectives: { text: string; met: boolean | null; why: string }[]; // revisión del trimestre que termina
+  habitsReflection: string;
+  match: Record<string, MatchState>; // por rol
+  nextObjectives: string[]; // 1 a 3
+  focus: string;
+  dec31: string; // "mi yo del 31 de diciembre"
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Escala de objetivos: de la facturación de hoy a la meta (Visión a 5 años) */
+export interface ScaleConfig {
+  name: string; // ej. el nombre del emprendimiento
+  startYear: number;
+  startMonth?: string; // YYYY-MM en que arrancó la escala ("hoy")
+  startRevenue: number; // USD/mes
+  startHours: number; // h/semana
+  targetYear: number;
+  targetRevenue: number;
+  targetHours: number;
+  savePercent: number; // % que separás para invertir
+  returnRate: number; // % anual
+  logs: Record<string, { revenue: number; hours?: number }>; // YYYY-MM
+  checks: Record<string, boolean>; // checklist del nivel
+}
+
+// ─────────────────────────────────────────────────────────────
 // PROPÓSITO / BRÚJULA
 // ─────────────────────────────────────────────────────────────
 export interface YearRole {
@@ -567,6 +657,11 @@ export interface Habit {
   isNegative?: boolean; // "dejar de…": se marca el día que NO lo hiciste
   why?: string;
   minimum?: string; // hábito mínimo viable
+  trigger?: string; // disparador: "cada vez que…"
+  remindAt?: string; // HH:mm, aviso push
+  reward?: string;
+  challengeStart?: string; // reto de 30 días (hábito del mes)
+  consolidatedAt?: string; // ya es automático
   archived?: boolean;
   sortOrder: number;
   createdAt: string;
@@ -576,7 +671,7 @@ export interface Habit {
 export interface HabitLog {
   id: string; // = date
   date: string;
-  values: Record<string, number>; // habitId -> valor (1 = hecho en check)
+  values: Record<string, number>; // habitId -> valor (1 = hecho en check, 0.5 parcial, -1 no cumplí, -2 día libre)
   updatedAt: string;
 }
 
@@ -639,6 +734,9 @@ export interface ReminderPrefs {
   tasks: boolean; // a la mañana del día que vencen
   birthdays: boolean;
   people?: boolean; // "hoy, cuidá a…"
+  dayPlan?: boolean; // "¿qué es lo más importante hoy?"
+  weeklyReview?: boolean; // domingo a la tarde
+  habitReminders?: boolean; // hora propia de cada hábito
   habits: boolean; // si faltan hábitos a la noche
   habitsTime: string;
   closeDay: boolean;
@@ -654,6 +752,9 @@ export const DEFAULT_REMINDERS: ReminderPrefs = {
   tasks: true,
   birthdays: true,
   people: true,
+  dayPlan: true,
+  weeklyReview: true,
+  habitReminders: true,
   habits: true,
   habitsTime: '21:00',
   closeDay: true,
@@ -691,6 +792,10 @@ export interface LifeCollections {
   habitLogs: Record<string, HabitLog>;
   focusSessions: Record<string, FocusSession>;
   days: Record<string, DayEntry>;
+  dayPlans: Record<string, DayPlan>;
+  weeklyReviews: Record<string, WeeklyReview>;
+  quarterReviews: Record<string, QuarterReview>;
+  courses: Record<string, Course>;
 }
 
 export interface LifeSingletons {
@@ -734,6 +839,10 @@ export const COLLECTION_KEYS: CollectionKey[] = [
   'habitLogs',
   'focusSessions',
   'days',
+  'dayPlans',
+  'weeklyReviews',
+  'quarterReviews',
+  'courses',
 ];
 
 export const SINGLETON_KEYS: SingletonKey[] = [

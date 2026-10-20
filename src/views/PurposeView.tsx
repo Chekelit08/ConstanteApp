@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Compass, Eye, Flag, Layers, Lock, Mail, MountainSnow, NotebookPen, Plus, RefreshCcw, Target, Trash2, Unlock } from 'lucide-react';
+import { CalendarCheck, Compass, Eye, Trophy, Flag, Layers, Lock, Mail, MountainSnow, NotebookPen, Plus, RefreshCcw, Target, Trash2, Unlock } from 'lucide-react';
 import { LifeApi } from '../hooks/useLifeData';
 import { Letter, MonthlyReview, PurposeData } from '../types/life';
 import { computeIndicators, Indicator } from '../services/indicators';
@@ -7,8 +7,9 @@ import { formatArgentineDate, getTodayDateString } from '../utils/dateUtils';
 import { currentMonthKey, daysBetween, lastSundayOfMonth, monthLabel, newId, nowIso, quarterOf } from '../utils/lifeUtils';
 import { btnDanger, btnGhost, btnPrimary, btnSecondary, Card, Field, inputCls, Modal, PageHeader, ProgressBar, Tabs, textareaCls } from '../components/ui';
 import { useToast } from '../components/Toast';
+import { MatchCard, QuarterReviewTab, weekToReview, WeeklyReviewTab } from '../components/Reviews';
 
-type PTab = 'panel' | 'vision' | 'roles' | 'quarters' | 'review' | 'struggles' | 'letters';
+type PTab = 'panel' | 'week' | 'quarter' | 'vision' | 'roles' | 'quarters' | 'review' | 'struggles' | 'letters';
 
 interface Props {
   life: LifeApi;
@@ -31,6 +32,8 @@ export const PurposeView: React.FC<Props> = ({ life }) => {
         onChange={(v) => setTab(v as PTab)}
         tabs={[
           { id: 'panel', label: 'Panel 2026', icon: <Target className="w-3.5 h-3.5" /> },
+          { id: 'week', label: 'Revisión semanal', icon: <CalendarCheck className="w-3.5 h-3.5" /> },
+          { id: 'quarter', label: 'Trimestral', icon: <Trophy className="w-3.5 h-3.5" /> },
           { id: 'vision', label: 'Visión & misión', icon: <Eye className="w-3.5 h-3.5" /> },
           { id: 'roles', label: 'Roles', icon: <Layers className="w-3.5 h-3.5" /> },
           { id: 'quarters', label: 'Trimestres', icon: <Flag className="w-3.5 h-3.5" /> },
@@ -40,6 +43,8 @@ export const PurposeView: React.FC<Props> = ({ life }) => {
         ]}
       />
       {tab === 'panel' && <PanelTab life={life} goTo={setTab} />}
+      {tab === 'week' && <WeeklyReviewTab life={life} />}
+      {tab === 'quarter' && <QuarterReviewTab life={life} />}
       {tab === 'vision' && <VisionTab purpose={purpose} save={savePurpose} />}
       {tab === 'roles' && <RolesTab life={life} />}
       {tab === 'quarters' && <QuartersTab purpose={purpose} />}
@@ -124,6 +129,15 @@ const PanelTab: React.FC<{ life: LifeApi; goTo: (t: PTab) => void }> = ({ life, 
           </Card>
         )}
         <div className="space-y-4">
+          <Card title="Revisión semanal" icon={<CalendarCheck className="w-4 h-4" />}>
+            <p className="text-sm text-main">
+              {life.store.weeklyReviews?.[weekToReview()] ? '✓ Ya revisaste esta semana.' : 'El domingo: 20 minutos para mirar tu semana y planear la que viene.'}
+            </p>
+            <button type="button" className={`${life.store.weeklyReviews?.[weekToReview()] ? btnSecondary : btnPrimary} w-full mt-3`} onClick={() => goTo('week')}>
+              {life.store.weeklyReviews?.[weekToReview()] ? 'Ver revisión' : 'Hacer revisión semanal'}
+            </button>
+          </Card>
+          <MatchCard life={life} onOpen={() => goTo('quarter')} />
           <Card title="Revisión mensual" icon={<RefreshCcw className="w-4 h-4" />}>
             <p className="text-sm text-main">
               {reviewDone ? '✓ Ya hiciste la revisión de este mes.' : `Toca el ${formatArgentineDate(reviewDay, { includeDayName: true })}.`}

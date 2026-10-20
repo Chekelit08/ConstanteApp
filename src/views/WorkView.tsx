@@ -6,6 +6,7 @@ import { getTodayDateString, getWeekDays } from '../utils/dateUtils';
 import { formatCompactArs, formatDuration, isoToLocalDate, newId, nowIso, pct, relativeDayLabel, txArs } from '../utils/lifeUtils';
 import { btnDanger, btnPrimary, btnSecondary, Card, Field, inputCls, Modal, PageHeader, ProgressBar, Stat, textareaCls } from '../components/ui';
 import { TaskList } from '../components/TaskList';
+import { ScaleCard } from '../components/ScaleCard';
 
 const KIND_LABEL: Record<WorkIdea['kind'], string> = {
   proceso: '🔄 Proceso',
@@ -77,6 +78,8 @@ export const WorkView: React.FC<{ life: LifeApi; onStartFocus: () => void }> = (
           </>
         }
       />
+
+      <ScaleCard life={life} />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <Stat label="Último sueldo" value={lastSalary ? formatCompactArs(lastSalary) : '—'} sub={`meta ${formatCompactArs(cfg.salaryGoalEnd)}`} tone={lastSalary >= cfg.salaryGoalEnd ? 'good' : 'default'} />

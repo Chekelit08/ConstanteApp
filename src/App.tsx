@@ -8,6 +8,7 @@ import {
   Grid2x2,
   Hourglass,
   Library,
+  Lightbulb,
   NotebookPen,
   Plus,
   Settings,
@@ -42,6 +43,7 @@ import { FinanceView } from './views/FinanceView';
 import { PeopleView } from './views/PeopleView';
 import { FaithView } from './views/FaithView';
 import { BooksView } from './views/BooksView';
+import { CoursesView } from './views/CoursesView';
 import { TimeView } from './views/TimeView';
 import { PurposeView } from './views/PurposeView';
 import { SettingsView } from './views/SettingsView';
@@ -59,6 +61,7 @@ const ICONS: Record<Section, React.ReactNode> = {
   people: <Users />,
   faith: <Cross />,
   books: <Library />,
+  courses: <Lightbulb />,
   time: <Hourglass />,
   purpose: <Compass />,
   settings: <Settings />,
@@ -243,6 +246,7 @@ function Main({ life, auth }: { life: ReturnType<typeof useLifeData>; auth: Retu
             {section === 'people' && <PeopleView life={life} />}
             {section === 'faith' && <FaithView life={life} onCompleteBibleHabit={() => habitActions.completeFirstCheckOfArea('fe', getTodayDateString())} />}
             {section === 'books' && <BooksView life={life} />}
+            {section === 'courses' && <CoursesView life={life} />}
             {section === 'time' && <TimeView life={life} />}
             {section === 'purpose' && <PurposeView life={life} />}
             {section === 'settings' && <SettingsView life={life} auth={auth} />}

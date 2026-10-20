@@ -10,6 +10,7 @@ export type Section =
   | 'people'
   | 'faith'
   | 'books'
+  | 'courses'
   | 'time'
   | 'purpose'
   | 'settings';
@@ -33,6 +34,7 @@ export const SECTIONS: SectionMeta[] = [
   { id: 'people', label: 'Personas', group: 'Áreas', key: 'R' },
   { id: 'faith', label: 'Fe', group: 'Áreas', key: 'V' },
   { id: 'books', label: 'Libros', group: 'Áreas', key: 'L' },
+  { id: 'courses', label: 'Cursos', group: 'Áreas', key: 'K' },
   { id: 'time', label: 'Tiempo y pantalla', group: 'Rumbo', key: 'P' },
   { id: 'purpose', label: 'Brújula', group: 'Rumbo', key: 'O' },
   { id: 'settings', label: 'Ajustes', group: 'Rumbo', key: 'A' },

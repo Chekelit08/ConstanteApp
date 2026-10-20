@@ -1,14 +1,19 @@
 import React, { useMemo, useState } from 'react';
-import { Archive, ChevronLeft, ChevronRight, Flame, Plus, Trash2 } from 'lucide-react';
+import { Archive, ChevronLeft, ChevronRight, Flame, Plus, Sparkles, Trash2 } from 'lucide-react';
 import { LifeApi } from '../hooks/useLifeData';
 import { useHabitActions } from '../hooks/useHabitActions';
 import { Habit, HabitSchedule, LifeArea, LIFE_AREAS } from '../types/life';
 import { addDays, DAY_NAMES_SHORT, getTodayDateString, getWeekDays } from '../utils/dateUtils';
-import { habitValue, isDone, isScheduled, streak, weekCount } from '../utils/habits';
+import { challengeDay, completionRate, HabitState, habitState, habitValue, isScheduled, streak, weekCount } from '../utils/habits';
+import { HabitWizard, MicroHabitCard, MonthHabitCard } from '../components/HabitChallenge';
 import { newId, nowIso, pct } from '../utils/lifeUtils';
 import { btnDanger, btnGhost, btnPrimary, btnSecondary, Card, EmptyState, Field, inputCls, Modal, PageHeader, Stat, textareaCls } from '../components/ui';
 
-const COLORS = ['#FF8A5B', '#FFC861', '#5FD4A8', '#8FB3FF', '#B69CFF', '#FF8A9B', '#7FD3F7', '#C9A8FF', '#FFB27A'];
+const NEXT_STATE: Record<HabitState, HabitState> = { none: 'done', done: 'partial', partial: 'missed', missed: 'off', off: 'none' };
+const STATE_MARK: Record<HabitState, string> = { none: '', done: '✓', partial: '½', missed: '✕', off: '🌙' };
+const STATE_LABEL: Record<HabitState, string> = { none: 'sin marcar', done: 'cumplí', partial: 'parcial', missed: 'no cumplí', off: 'día libre' };
+
+export const COLORS = ['#FF8A5B', '#FFC861', '#5FD4A8', '#8FB3FF', '#B69CFF', '#FF8A9B', '#7FD3F7', '#C9A8FF', '#FFB27A'];
 
 export const HabitsView: React.FC<{ life: LifeApi }> = ({ life }) => {
   const { store } = life;
@@ -16,6 +21,7 @@ export const HabitsView: React.FC<{ life: LifeApi }> = ({ life }) => {
   const [anchor, setAnchor] = useState(today);
   const [modal, setModal] = useState<{ open: boolean; habit?: Partial<Habit> }>({ open: false });
   const [showArchived, setShowArchived] = useState(false);
+  const [wizard, setWizard] = useState(false);
   const actions = useHabitActions(life);
   const week = getWeekDays(anchor);
 
@@ -30,8 +36,9 @@ export const HabitsView: React.FC<{ life: LifeApi }> = ({ life }) => {
       const weeks = [0, 7, 14, 21].map((o) => addDays(today, -o));
       return pct(weeks.filter((w) => weekCount(h, store.habitLogs, w) >= (h.timesPerWeek || 1)).length, weeks.length);
     }
-    return sched.length ? pct(sched.filter((d) => isDone(h, habitValue(store.habitLogs, h.id, d))).length, sched.length) : 0;
+    return sched.length ? completionRate(h, store.habitLogs, last30[0], today).pct : 0;
   };
+  const challenge = active.find((h) => challengeDay(h, today) !== null);
   const bestStreak = Math.max(0, ...active.map((h) => streak(h, store.habitLogs, today)));
   const avg = active.length ? Math.round(active.reduce((s, h) => s + consistency(h), 0) / active.length) : 0;
 
@@ -47,6 +54,11 @@ export const HabitsView: React.FC<{ life: LifeApi }> = ({ life }) => {
           </button>
         }
       />
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <MonthHabitCard life={life} habit={challenge} onStart={() => setWizard(true)} />
+        <MicroHabitCard life={life} />
+      </div>
 
       <div className="grid grid-cols-3 gap-2.5">
         <Stat label="Activos" value={active.length} />
@@ -101,24 +113,23 @@ export const HabitsView: React.FC<{ life: LifeApi }> = ({ life }) => {
                     {week.map((d) => {
                       const sched = isScheduled(h, d);
                       const v = habitValue(store.habitLogs, h.id, d);
-                      const done = isDone(h, v);
-                      const partial = h.kind === 'count' && v > 0 && !done;
+                      const st = habitState(h, v);
                       const future = d > today;
                       return (
                         <td key={d} className="text-center py-2">
                           <button
                             type="button"
                             disabled={future || !sched}
-                            onClick={() => actions.toggle(h, d)}
-                            aria-label={`${h.name} ${d}: ${done ? 'hecho' : 'pendiente'}`}
-                            className="w-9 h-9 rounded-full inline-flex items-center justify-center border-2 transition cursor-pointer disabled:cursor-default disabled:opacity-25"
+                            onClick={() => actions.setState(h, d, NEXT_STATE[st])}
+                            aria-label={`${h.name} ${d}: ${STATE_LABEL[st]}`}
+                            className="w-9 h-9 rounded-full inline-flex items-center justify-center border-2 transition cursor-pointer disabled:cursor-default disabled:opacity-25 text-sm font-bold"
                             style={{
-                              backgroundColor: done ? h.color : partial ? `color-mix(in srgb, ${h.color} 25%, transparent)` : 'transparent',
-                              borderColor: done ? 'transparent' : sched ? 'var(--border-app)' : 'transparent',
-                              color: '#141633',
+                              backgroundColor: st === 'done' ? h.color : st === 'partial' ? `color-mix(in srgb, ${h.color} 30%, transparent)` : st === 'missed' ? 'color-mix(in srgb, var(--danger) 14%, transparent)' : 'transparent',
+                              borderColor: st === 'done' ? 'transparent' : st === 'missed' ? 'color-mix(in srgb, var(--danger) 45%, transparent)' : st === 'off' ? 'transparent' : sched ? 'var(--border-app)' : 'transparent',
+                              color: st === 'done' ? '#141633' : st === 'missed' ? 'var(--danger)' : 'var(--text-main)',
                             }}
                           >
-                            {done ? '✓' : !sched ? '·' : ''}
+                            {!sched ? '·' : STATE_MARK[st]}
                           </button>
                         </td>
                       );
@@ -129,6 +140,9 @@ export const HabitsView: React.FC<{ life: LifeApi }> = ({ life }) => {
               </tbody>
             </table>
           </div>
+          <p className="px-4 sm:px-5 py-2.5 border-t border-subtle text-[11px] text-dim">
+            Tocá para cambiar: <b className="text-main">✓</b> cumplí · <b className="text-main">½</b> parcial · <b className="text-[var(--danger)]">✕</b> no cumplí · 🌙 día libre (no corta la racha)
+          </p>
         </Card>
       )}
 
@@ -153,8 +167,9 @@ export const HabitsView: React.FC<{ life: LifeApi }> = ({ life }) => {
               </div>
               <div className="flex gap-[3px] mt-4">
                 {last30.map((d) => {
-                  const done = isDone(h, habitValue(store.habitLogs, h.id, d));
-                  return <div key={d} title={d} className="flex-1 h-5 rounded-[4px]" style={{ backgroundColor: done ? h.color : 'var(--bg-muted)', opacity: isScheduled(h, d) ? 1 : 0.35 }} />;
+                  const st = habitState(h, habitValue(store.habitLogs, h.id, d));
+                  const bg = st === 'done' ? h.color : st === 'partial' ? `color-mix(in srgb, ${h.color} 45%, var(--bg-muted))` : st === 'missed' ? 'color-mix(in srgb, var(--danger) 35%, var(--bg-muted))' : 'var(--bg-muted)';
+                  return <div key={d} title={`${d}: ${STATE_LABEL[st]}`} className="flex-1 h-5 rounded-[4px]" style={{ backgroundColor: bg, opacity: isScheduled(h, d) && st !== 'off' ? 1 : 0.35 }} />;
                 })}
               </div>
             </Card>
@@ -181,6 +196,7 @@ export const HabitsView: React.FC<{ life: LifeApi }> = ({ life }) => {
         </div>
       )}
 
+      {wizard && <HabitWizard life={life} current={challenge} onClose={() => setWizard(false)} />}
       {modal.open && <HabitModal life={life} initial={modal.habit} onClose={() => setModal({ open: false })} />}
     </div>
   );
@@ -200,6 +216,9 @@ const HabitModal: React.FC<{ life: LifeApi; initial?: Partial<Habit>; onClose: (
   const [isNegative, setIsNegative] = useState(Boolean(initial?.isNegative));
   const [why, setWhy] = useState(initial?.why || '');
   const [minimum, setMinimum] = useState(initial?.minimum || '');
+  const [trigger, setTrigger] = useState(initial?.trigger || '');
+  const [reward, setReward] = useState(initial?.reward || '');
+  const [remindAt, setRemindAt] = useState(initial?.remindAt || '');
   const isEdit = Boolean(initial?.id);
 
   const save = () => {
@@ -220,6 +239,11 @@ const HabitModal: React.FC<{ life: LifeApi; initial?: Partial<Habit>; onClose: (
       isNegative: kind === 'check' ? isNegative : undefined,
       why: why.trim() || undefined,
       minimum: minimum.trim() || undefined,
+      trigger: trigger.trim() || undefined,
+      reward: reward.trim() || undefined,
+      remindAt: remindAt || undefined,
+      challengeStart: initial?.challengeStart,
+      consolidatedAt: initial?.consolidatedAt,
       archived: initial?.archived,
       sortOrder: initial?.sortOrder ?? Object.keys(life.store.habits).length + 1,
       createdAt: initial?.createdAt || now,
@@ -331,6 +355,17 @@ const HabitModal: React.FC<{ life: LifeApi; initial?: Partial<Habit>; onClose: (
       <Field label="Versión mínima (para los días difíciles)">
         <input className={inputCls} value={minimum} onChange={(e) => setMinimum(e.target.value)} placeholder="Ej: 1 página, 5 flexiones" />
       </Field>
+      <Field label="Disparador" hint="Cada vez que…">
+        <input className={inputCls} value={trigger} onChange={(e) => setTrigger(e.target.value)} placeholder="Ej: cada vez que me lavo los dientes a la noche" />
+      </Field>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Recompensa">
+          <input className={inputCls} value={reward} onChange={(e) => setReward(e.target.value)} placeholder="Ej: un mate tranquilo" />
+        </Field>
+        <Field label="Recordatorio" hint="Aviso push a esa hora">
+          <input type="time" className={inputCls} value={remindAt} onChange={(e) => setRemindAt(e.target.value)} />
+        </Field>
+      </div>
     </Modal>
   );
 };

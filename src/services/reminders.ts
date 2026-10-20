@@ -1,7 +1,8 @@
 import { DEFAULT_REMINDERS, EVAL_TYPE_LABEL, LifeStore } from '../types/life';
 import { addDays, getMondayIndexedDay, getTodayDateString, parseDateString } from '../utils/dateUtils';
 import { eventOccursOn, minutesToTime, timeToMinutes } from '../utils/lifeUtils';
-import { dayCompletion } from '../utils/habits';
+import { dayCompletion, habitsForDate, habitValue, isDone } from '../utils/habits';
+import { lastSundayOfMonth } from '../utils/lifeUtils';
 import { peopleToCare } from '../utils/people';
 import { getVerseForDate } from './verses';
 import type { FeedEvent } from './calendarFeeds';
@@ -97,6 +98,27 @@ export function buildReminders(store: LifeStore, external: FeedEvent[]): PushRem
       const top = peopleToCare(Object.values(store.people), Object.values(store.interactions), date, 1)[0];
       if (top && !top.reason.startsWith('🎂'))
         add({ fireAt: at(date, r.morningTime), title: `🤍 Hoy, cuidá a ${top.p.name}`, body: top.reason, url: '/?s=people', tag: `care-${date}` });
+    }
+
+    if (r.dayPlan !== false && !store.dayPlans?.[date]?.top) {
+      add({ fireAt: at(date, r.morningTime), title: '🎯 ¿Qué es lo más importante hoy?', body: 'Una sola cosa que, si la lográs, te acerca a tu visión.', url: '/?s=today', tag: `plan-${date}` });
+    }
+
+    // hora propia de cada hábito (si hoy ya lo hiciste, no avisa)
+    if (r.habitReminders !== false) {
+      habitsForDate(store, date)
+        .filter((h) => h.remindAt && !(date === today && isDone(h, habitValue(store.habitLogs, h.id, date))))
+        .forEach((h) => add({ fireAt: at(date, h.remindAt!), title: `${h.emoji} ${h.name}`, body: h.trigger ? `Cada vez que ${h.trigger}` : h.minimum ? `Versión mínima: ${h.minimum}` : 'Es la hora 💪', url: '/?s=habits', tag: `hab-${h.id}-${date}` }));
+    }
+
+    // domingo: revisión semanal; último domingo de mar/jun/sep/dic: trimestral
+    if (weekday === 6 && r.weeklyReview !== false) {
+      const monday = addDays(date, -6);
+      if (!store.weeklyReviews?.[monday])
+        add({ fireAt: at(date, '19:00'), title: '🧭 Revisión semanal', body: '20 minutos: mirá tu semana y elegí tus logros para la que viene.', url: '/?s=purpose', tag: `week-${date}` });
+      const month = Number(date.slice(5, 7));
+      if (month % 3 === 0 && lastSundayOfMonth(date.slice(0, 7)) === date)
+        add({ fireAt: at(date, '10:00'), title: '🏁 Revisión trimestral', body: '¿Vas ganando, empatando o perdiendo el partido del año?', url: '/?s=purpose', tag: `quarter-${date}` });
     }
 
     // hábitos: si hoy ya completaste todo, no molesta

@@ -4,6 +4,7 @@ import { LifeApi } from '../hooks/useLifeData';
 import { useHabitActions } from '../hooks/useHabitActions';
 import { Section } from '../sections';
 import { SkyHero } from '../components/SkyHero';
+import { DayPriority } from '../components/DayPriority';
 import { formatClock, useFocus } from '../components/FocusContext';
 import { getAgendaForDate, getUpcomingEvaluations } from '../services/agenda';
 import { useCalendarFeeds } from '../services/calendarFeeds';
@@ -118,6 +119,8 @@ export const TodayView: React.FC<Props> = ({ life, onNavigate, onOpenJournal }) 
         )}
       </SkyHero>
 
+      <DayPriority life={life} />
+
       {/* AHORA / DESPUÉS */}
       {(nowItem || nextItem || allDay.length > 0) && (
         <button
@@ -164,7 +167,7 @@ export const TodayView: React.FC<Props> = ({ life, onNavigate, onOpenJournal }) 
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
             {habits.map((h) => (
-              <HabitTile key={h.id} habit={h} life={life} date={today} onToggle={() => actions.toggle(h, today)} onStep={(d) => actions.setValue(h.id, today, habitValue(store.habitLogs, h.id, today) + d)} />
+              <HabitTile key={h.id} habit={h} life={life} date={today} onToggle={() => actions.toggle(h, today)} onStep={(d) => actions.setValue(h.id, today, Math.max(0, habitValue(store.habitLogs, h.id, today)) + d)} />
             ))}
           </div>
         )}
