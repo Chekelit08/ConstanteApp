@@ -7,7 +7,7 @@ import { nowTimeAR, timeToMinutes } from '../utils/lifeUtils';
  * recorre un arco desde que te levantás hasta que te acostás.
  */
 
-type Phase = 'night' | 'dawn' | 'morning' | 'day' | 'dusk' | 'evening';
+export type Phase = 'night' | 'dawn' | 'morning' | 'day' | 'dusk' | 'evening';
 
 const SKIES: Record<Phase, { bg: string; horizon: string; label: string }> = {
   night: { bg: 'linear-gradient(180deg,#070a1c 0%,#11163a 60%,#1c2050 100%)', horizon: '#2a2f6a', label: 'Noche' },
@@ -18,7 +18,7 @@ const SKIES: Record<Phase, { bg: string; horizon: string; label: string }> = {
   evening: { bg: 'linear-gradient(180deg,#0e1130 0%,#271f58 60%,#4a2f72 100%)', horizon: '#5b3f86', label: 'Anochecer' },
 };
 
-function phaseFor(min: number): Phase {
+export function phaseFor(min: number): Phase {
   const h = min / 60;
   if (h < 5) return 'night';
   if (h < 7.5) return 'dawn';

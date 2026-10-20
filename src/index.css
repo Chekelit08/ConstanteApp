@@ -94,6 +94,8 @@
 .bg-accent-subtle { background-color: var(--accent-subtle) !important; }
 .text-accent-contrast { color: var(--accent-contrast) !important; }
 .shadow-card { box-shadow: var(--card-shadow); }
+.text-section { color: var(--section); }
+.bg-section-subtle { background-color: color-mix(in srgb, var(--section) 14%, transparent); }
 
 .font-display { font-family: var(--font-display); font-optical-sizing: auto; letter-spacing: -0.02em; }
 .font-num { font-family: var(--font-display); font-variant-numeric: tabular-nums; letter-spacing: -0.03em; }
@@ -106,13 +108,65 @@ html, body {
   min-height: 100%;
 }
 
+/* ── El cielo de la hora: el fondo de toda la app cambia con el momento del día ── */
+:root { --horizon: rgba(76, 92, 201, 0.22); --horizon-2: rgba(182, 156, 255, 0.08); --section: var(--accent); }
+:root[data-phase='night'] { --horizon: rgba(76, 92, 201, 0.24); --horizon-2: rgba(182, 156, 255, 0.08); }
+:root[data-phase='dawn'] { --horizon: rgba(226, 113, 138, 0.26); --horizon-2: rgba(255, 179, 124, 0.14); }
+:root[data-phase='morning'] { --horizon: rgba(255, 196, 120, 0.2); --horizon-2: rgba(143, 179, 255, 0.14); }
+:root[data-phase='day'] { --horizon: rgba(93, 143, 240, 0.26); --horizon-2: rgba(143, 179, 255, 0.1); }
+:root[data-phase='dusk'] { --horizon: rgba(224, 100, 123, 0.26); --horizon-2: rgba(123, 63, 134, 0.18); }
+:root[data-phase='evening'] { --horizon: rgba(105, 72, 160, 0.3); --horizon-2: rgba(76, 92, 201, 0.14); }
+[data-theme='light'][data-phase] { --horizon: color-mix(in srgb, var(--sky) 16%, transparent); }
+[data-theme='light'][data-phase='dawn'], [data-theme='light'][data-phase='dusk'] { --horizon: rgba(229, 100, 58, 0.14); }
+
 body::before {
   content: '';
   position: fixed;
   inset: 0;
-  background: var(--glow);
+  background:
+    radial-gradient(140% 55% at 50% -12%, var(--horizon), transparent 62%),
+    radial-gradient(90% 40% at 100% 0%, var(--horizon-2), transparent 70%),
+    radial-gradient(900px 400px at -10% 110%, rgba(255, 138, 91, 0.05), transparent 60%);
   pointer-events: none;
   z-index: 0;
+}
+
+/* estrellas de fondo solo de noche (tema oscuro) */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0 0 55% 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 2s ease;
+  background-image:
+    radial-gradient(1px 1px at 12% 18%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 34% 8%, #fff 50%, transparent 51%),
+    radial-gradient(1.4px 1.4px at 58% 22%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 77% 12%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 91% 30%, #fff 50%, transparent 51%),
+    radial-gradient(1.2px 1.2px at 22% 40%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 66% 44%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 45% 33%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 5% 60%, #fff 50%, transparent 51%),
+    radial-gradient(1.3px 1.3px at 86% 58%, #fff 50%, transparent 51%);
+  mask-image: linear-gradient(180deg, #000 30%, transparent);
+}
+:root:not([data-theme='light'])[data-phase='night'] body::after,
+:root:not([data-theme='light'])[data-phase='evening'] body::after { opacity: 0.55; }
+
+/* tarjetas: una línea de luz arriba, como el borde del horizonte */
+.shadow-card { position: relative; }
+.card-glint::before {
+  content: '';
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  top: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--section) 55%, transparent), transparent);
+  pointer-events: none;
 }
 
 #root { position: relative; z-index: 1; }

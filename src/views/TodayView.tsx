@@ -165,7 +165,7 @@ export const TodayView: React.FC<Props> = ({ life, onNavigate, onOpenJournal }) 
         {habits.length === 0 ? (
           <p className="text-sm text-muted">No hay hábitos para hoy. Creá uno en Hábitos.</p>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
+          <div className="rounded-[26px] bg-surface border border-subtle shadow-card card-glint px-2 py-1.5 grid grid-cols-1 sm:grid-cols-2 sm:gap-x-2">
             {habits.map((h) => (
               <HabitTile key={h.id} habit={h} life={life} date={today} onToggle={() => actions.toggle(h, today)} onStep={(d) => actions.setValue(h.id, today, Math.max(0, habitValue(store.habitLogs, h.id, today)) + d)} />
             ))}
@@ -328,46 +328,53 @@ export const TodayView: React.FC<Props> = ({ life, onNavigate, onOpenJournal }) 
 
 // ─────────────────────────────────────────────────────────────
 const HabitTile: React.FC<{ habit: Habit; life: LifeApi; date: string; onToggle: () => void; onStep: (delta: number) => void }> = ({ habit: h, life, date, onToggle, onStep }) => {
-  const v = habitValue(life.store.habitLogs, h.id, date);
+  const v = Math.max(0, habitValue(life.store.habitLogs, h.id, date));
   const done = isDone(h, v);
   const p = h.kind === 'count' ? Math.min(100, Math.round((v / (h.target || 1)) * 100)) : done ? 100 : 0;
   const st = streak(h, life.store.habitLogs, date);
   const step = h.kind === 'count' ? ((h.unit || '').startsWith('min') ? 15 : (h.target || 1) >= 10 ? 5 : 1) : 0;
-  const weekly = h.schedule === 'weekly' ? `${weekCount(h, life.store.habitLogs, date)}/${h.timesPerWeek} sem.` : null;
+  const weekly = h.schedule === 'weekly' ? `${weekCount(h, life.store.habitLogs, date)}/${h.timesPerWeek} en la semana` : null;
+  const meta = h.kind === 'count' ? `${v}/${h.target} ${h.unit || ''}` : h.isNegative ? (done ? 'evitado' : 'por evitar') : done ? 'hecho' : '';
 
   return (
-    <div
-      className={`relative overflow-hidden rounded-[22px] border p-3.5 transition ${done ? 'border-transparent' : 'bg-surface border-subtle shadow-card'}`}
-      style={done ? { background: `linear-gradient(140deg, color-mix(in srgb, ${h.color} 38%, var(--bg-surface)), color-mix(in srgb, ${h.color} 14%, var(--bg-surface)))` } : undefined}
-    >
-      <button type="button" onClick={onToggle} className="w-full text-left cursor-pointer" aria-pressed={done} aria-label={`${h.name}: ${done ? 'hecho' : 'pendiente'}`}>
-        <div className="flex items-start justify-between">
-          <span className={`text-2xl ${done ? 'animate-pop' : ''}`}>{h.emoji}</span>
-          <span
-            className={`w-7 h-7 rounded-full flex items-center justify-center border-2 transition ${done ? 'border-transparent text-[#141633]' : 'border-app'}`}
-            style={done ? { backgroundColor: h.color } : undefined}
-          >
-            {done && <Check className="w-4 h-4" strokeWidth={3} />}
+    <div className="flex items-center gap-3 px-2.5 py-2.5 border-b border-subtle last:border-0 sm:[&:nth-last-child(2):nth-child(odd)]:border-0">
+      <button type="button" onClick={onToggle} className="flex-1 min-w-0 flex items-center gap-3 text-left cursor-pointer" aria-pressed={done} aria-label={`${h.name}: ${done ? 'hecho' : 'pendiente'}`}>
+        <span
+          className={`relative w-11 h-11 shrink-0 rounded-full flex items-center justify-center text-xl transition ${done ? 'animate-pop' : ''}`}
+          style={{ background: done ? `color-mix(in srgb, ${h.color} 30%, var(--bg-elevated))` : 'var(--bg-elevated)' }}
+        >
+          <svg className="absolute inset-0 -rotate-90" viewBox="0 0 44 44" aria-hidden>
+            <circle cx="22" cy="22" r="20.5" fill="none" stroke={h.color} strokeWidth="2.5" strokeLinecap="round" strokeDasharray={128.8} strokeDashoffset={128.8 - (p / 100) * 128.8} style={{ transition: 'stroke-dashoffset 500ms ease' }} />
+          </svg>
+          {h.emoji}
+        </span>
+        <span className="min-w-0">
+          <span className={`block text-[15px] font-semibold leading-tight truncate ${done ? 'text-muted line-through decoration-1' : 'text-main'}`}>{h.name}</span>
+          <span className="block text-[11px] text-dim font-mono truncate mt-0.5">
+            {[meta, weekly, st > 1 ? `🔥 ${st}` : ''].filter(Boolean).join(' · ') || 'tocá para marcar'}
           </span>
-        </div>
-        <div className="mt-3 text-[15px] font-semibold text-main leading-tight line-clamp-2">{h.name}</div>
-        <div className="text-[11px] text-muted mt-1 font-mono">
-          {h.kind === 'count' ? `${v}/${h.target} ${h.unit || ''}` : h.isNegative ? 'evitado' : done ? 'hecho' : 'pendiente'}
-          {weekly ? ` · ${weekly}` : st > 1 ? ` · 🔥${st}` : ''}
-        </div>
+        </span>
       </button>
-      {h.kind === 'count' && (
-        <div className="flex items-center gap-1.5 mt-2.5">
+      {h.kind === 'count' ? (
+        <div className="flex items-center gap-1 shrink-0">
           <button type="button" onClick={() => onStep(-step)} disabled={v <= 0} aria-label="Restar" className="w-8 h-8 rounded-full border border-app flex items-center justify-center text-muted hover:text-main cursor-pointer disabled:opacity-30">
             <Minus className="w-3.5 h-3.5" />
           </button>
-          <div className="flex-1 h-1.5 rounded-full bg-surface-muted overflow-hidden">
-            <div className="h-full rounded-full transition-all" style={{ width: `${p}%`, backgroundColor: h.color }} />
-          </div>
-          <button type="button" onClick={() => onStep(step)} aria-label={`Sumar ${step}`} className="w-8 h-8 rounded-full border border-app flex items-center justify-center text-muted hover:text-main cursor-pointer">
+          <button type="button" onClick={() => onStep(step)} aria-label={`Sumar ${step}`} className="w-8 h-8 rounded-full border border-app flex items-center justify-center text-main cursor-pointer" style={{ borderColor: h.color }}>
             <Plus className="w-3.5 h-3.5" />
           </button>
         </div>
+      ) : (
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-hidden
+          tabIndex={-1}
+          className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center border-2 transition cursor-pointer ${done ? 'border-transparent text-[#141633]' : 'border-app'}`}
+          style={done ? { backgroundColor: h.color } : undefined}
+        >
+          {done && <Check className="w-4 h-4" strokeWidth={3} />}
+        </button>
       )}
     </div>
   );

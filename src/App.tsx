@@ -22,6 +22,8 @@ import { useLifeData } from './hooks/useLifeData';
 import { useAuth } from './hooks/useAuth';
 import { useHabitActions } from './hooks/useHabitActions';
 import { useVerseNotifier } from './services/verseNotifier';
+import { phaseFor } from './components/SkyHero';
+import { nowTimeAR, timeToMinutes } from './utils/lifeUtils';
 import { CalendarFeedsProvider } from './services/calendarFeeds';
 import { useReminderSync } from './hooks/useReminderSync';
 import { Section, SECTIONS } from './sections';
@@ -67,6 +69,18 @@ const ICONS: Record<Section, React.ReactNode> = {
   settings: <Settings />,
 };
 
+/** El fondo de la app sigue al cielo real: amanecer, día, atardecer, noche */
+function useSkyPhase() {
+  useEffect(() => {
+    const apply = () => {
+      document.documentElement.dataset.phase = phaseFor(timeToMinutes(nowTimeAR()));
+    };
+    apply();
+    const id = setInterval(apply, 60_000);
+    return () => clearInterval(id);
+  }, []);
+}
+
 function useTheme(theme: 'dark' | 'light' | 'system') {
   useEffect(() => {
     const apply = () => {
@@ -106,6 +120,7 @@ function Shell() {
   const life = useLifeData(auth.user);
   useVerseNotifier(life);
   useTheme(life.store.prefs.theme);
+  useSkyPhase();
   return (
     <CalendarFeedsProvider>
       <FocusProvider life={life}>
@@ -178,7 +193,7 @@ function Main({ life, auth }: { life: ReturnType<typeof useLifeData>; auth: Retu
   const groups: SectionMeta['group'][] = ['Día', 'Áreas', 'Rumbo'];
 
   return (
-    <div className="min-h-screen lg:flex">
+    <div className="min-h-screen lg:flex" style={{ '--section': SECTIONS.find((x) => x.id === section)?.color } as React.CSSProperties}>
       {/* ── Rail lateral (escritorio) ─────────────────────── */}
       <aside className="hidden lg:flex flex-col w-64 shrink-0 h-screen sticky top-0 px-4 py-6 border-r border-subtle" aria-label="Navegación">
         <div className="flex items-center gap-2.5 px-2">
@@ -201,7 +216,7 @@ function Main({ life, auth }: { life: ReturnType<typeof useLifeData>; auth: Retu
                       active ? 'bg-surface-elevated text-main' : 'text-muted hover:text-main'
                     }`}
                   >
-                    <span className={active ? 'text-accent' : ''}>{ICONS[s.id]}</span>
+                    <span style={active ? { color: s.color } : undefined}>{ICONS[s.id]}</span>
                     <span className="flex-1 text-left">{s.label}</span>
                     {s.id === 'focus' && focus.running && <span className="font-mono text-[11px] text-accent">{formatClock(focus.remainingMs)}</span>}
                     {!(s.id === 'focus' && focus.running) && <kbd className="font-mono text-[10px] text-dim">{s.key}</kbd>}
@@ -292,11 +307,15 @@ function Main({ life, auth }: { life: ReturnType<typeof useLifeData>; auth: Retu
                   key={s.id}
                   type="button"
                   onClick={() => go(s.id)}
-                  className={`flex flex-col items-start gap-3 p-3.5 rounded-[20px] border min-h-[84px] cursor-pointer transition [&>span>svg]:w-5 [&>span>svg]:h-5 ${
-                    section === s.id ? 'bg-accent-subtle border-accent' : 'bg-surface-elevated border-subtle'
-                  }`}
+                  className="flex flex-col items-start gap-2.5 p-3 rounded-[20px] border min-h-[84px] cursor-pointer transition active:scale-[0.97] [&>span>svg]:w-[18px] [&>span>svg]:h-[18px]"
+                  style={{
+                    backgroundColor: section === s.id ? `color-mix(in srgb, ${s.color} 16%, var(--bg-elevated))` : 'var(--bg-elevated)',
+                    borderColor: section === s.id ? s.color : 'var(--border-subtle)',
+                  }}
                 >
-                  <span className="text-accent">{ICONS[s.id]}</span>
+                  <span className="w-9 h-9 rounded-full flex items-center justify-center" style={{ color: s.color, backgroundColor: `color-mix(in srgb, ${s.color} 16%, transparent)`, boxShadow: `0 0 18px -4px color-mix(in srgb, ${s.color} 60%, transparent)` }}>
+                    {ICONS[s.id]}
+                  </span>
                   <span className="text-[13px] font-semibold text-main text-left leading-tight">{s.label}</span>
                 </button>
               ))}
@@ -333,8 +352,9 @@ const DockButton: React.FC<{ active: boolean; label: string; icon: React.ReactNo
     aria-current={active ? 'page' : undefined}
     className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-1 rounded-full cursor-pointer transition min-h-[46px] [&>span>svg]:w-[21px] [&>span>svg]:h-[21px] ${active ? 'text-main' : 'text-dim'}`}
   >
-    <span className={active ? 'text-accent' : ''}>{icon}</span>
+    <span className={active ? 'text-section' : ''}>{icon}</span>
     <span className="text-[10px] font-semibold">{label}</span>
+    <span className={`w-1 h-1 rounded-full transition ${active ? 'bg-[var(--section)]' : 'bg-transparent'}`} />
   </button>
 );
 

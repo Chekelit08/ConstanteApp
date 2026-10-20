@@ -32,11 +32,16 @@ export const PageHeader: React.FC<{
 }> = ({ kicker, title, subtitle, actions }) => (
   <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pt-2 animate-rise">
     <div className="min-w-0">
-      <span className={kickerCls}>{kicker}</span>
-      <h1 className="font-display text-[34px] sm:text-5xl font-bold text-main mt-1 leading-[1.02]">{title}</h1>
-      {subtitle && <p className="text-sm text-muted mt-2 max-w-2xl leading-relaxed">{subtitle}</p>}
+      <span className="flex items-center gap-2 text-[11px] font-mono font-medium uppercase tracking-[0.14em] text-section">
+        <span aria-hidden className="text-[13px] leading-none drop-shadow-[0_0_8px_var(--section)]">✦</span>
+        <span className="truncate">{kicker}</span>
+      </span>
+      <h1 className="font-display text-[38px] sm:text-[56px] font-extrabold text-main mt-1.5 leading-[0.98] tracking-[-0.035em]">{title}</h1>
+      {subtitle && <p className="text-[15px] text-muted mt-2.5 max-w-2xl leading-relaxed">{subtitle}</p>}
     </div>
-    {actions && <div className="flex flex-wrap items-center gap-2 shrink-0">{actions}</div>}
+    {actions && (
+      <div className="flex items-center gap-2 shrink-0 overflow-x-auto no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0 [&>*]:shrink-0">{actions}</div>
+    )}
   </header>
 );
 
@@ -48,11 +53,11 @@ export const Card: React.FC<{
   children: React.ReactNode;
   padded?: boolean;
 }> = ({ title, icon, action, className = '', children, padded = true }) => (
-  <section className={`rounded-[26px] bg-surface border border-subtle shadow-card ${padded ? 'p-5 sm:p-6' : ''} ${className}`}>
+  <section className={`card-glint rounded-[26px] bg-surface border border-subtle shadow-card ${padded ? 'p-5 sm:p-6' : ''} ${className}`}>
     {(title || action) && (
       <div className={`flex items-center justify-between gap-3 ${padded ? 'mb-4' : 'p-5 sm:p-6 pb-0 mb-4'}`}>
         <div className="flex items-center gap-2.5 min-w-0">
-          {icon && <span className="text-accent shrink-0 [&>svg]:w-[18px] [&>svg]:h-[18px]">{icon}</span>}
+          {icon && <span className="text-section shrink-0 [&>svg]:w-[18px] [&>svg]:h-[18px]">{icon}</span>}
           {title && <h3 className="font-display text-[17px] font-semibold text-main truncate">{title}</h3>}
         </div>
         {action}
