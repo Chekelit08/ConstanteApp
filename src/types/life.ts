@@ -506,7 +506,11 @@ export interface Course {
   url?: string;
   area: LifeArea;
   status: CourseStatus;
-  ideas: string; // las 3 ideas clave
+  ideas: string; // las 3 ideas clave (tus notas)
+  summary?: string; // resumen del video
+  keyIdeas?: string[];
+  suggested?: string[]; // acciones sugeridas para aplicar
+  minutes?: number;
   actions: CourseAction[]; // "nota → acción": un curso se cierra cuando lo aplicaste
   createdAt: string;
   updatedAt: string;

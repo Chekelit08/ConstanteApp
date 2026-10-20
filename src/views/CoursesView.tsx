@@ -1,33 +1,18 @@
 import React, { useMemo, useState } from 'react';
-import { CheckCircle2, ExternalLink, ListTodo, Plus, Repeat, Sparkles, Trash2 } from 'lucide-react';
+import { CheckCircle2, ChevronDown, Clock, ExternalLink, ListTodo, Play, Plus, Repeat, Sparkles, Trash2 } from 'lucide-react';
 import { LifeApi } from '../hooks/useLifeData';
 import { Course, CourseStatus, LifeArea, LIFE_AREAS } from '../types/life';
 import { getTodayDateString } from '../utils/dateUtils';
 import { newId, nowIso } from '../utils/lifeUtils';
 import { btnDanger, btnPrimary, btnSecondary, Card, Chip, EmptyState, Field, inputCls, Modal, PageHeader, Stat, textareaCls } from '../components/ui';
 import { useToast } from '../components/Toast';
+import { COURSE_LIBRARY, findLibraryCourse, youtubeIdFrom } from '../services/courseLibrary';
 
 const STATUS: { id: CourseStatus; label: string; color: string }[] = [
   { id: 'por_ver', label: 'Por ver', color: 'var(--text-muted)' },
   { id: 'viendo', label: 'Viendo', color: 'var(--sky)' },
   { id: 'visto', label: 'Visto', color: 'var(--gold)' },
   { id: 'aplicado', label: 'Aplicado', color: 'var(--mint)' },
-];
-
-/** Los 12 videos de la página "Cursos" de Notion */
-const NOTION_COURSES: { title: string; author: string; area: LifeArea }[] = [
-  { title: 'Cómo gestionar tu dinero: guía de finanzas personales', author: 'Adrià Solà Pastor', area: 'finanzas' },
-  { title: 'Cuando ganes dinero, comprá estas 8 cosas cuanto antes', author: 'Adrià Solà Pastor', area: 'finanzas' },
-  { title: '16 microhábitos que te cambiarán la vida según la neurociencia', author: 'Adrià Solà Pastor', area: 'personal' },
-  { title: 'Cómo hacer preguntas que hacen que las personas te adoren', author: 'Adrià Solà Pastor', area: 'amigos' },
-  { title: 'Dame 16 minutos y te haré peligrosamente constante', author: 'Adrià Solà Pastor', area: 'personal' },
-  { title: 'Dame 22 minutos y hablarás mejor que el 99% de las personas', author: 'Adrià Solà Pastor', area: 'personal' },
-  { title: 'Si tuviera que hacerme rico desde cero, esto es lo que haría', author: 'Luis Monge Malo', area: 'trabajo' },
-  { title: 'Los 6 pasos para dominar el arte de contar historias', author: 'Adrià Solà Pastor', area: 'trabajo' },
-  { title: 'Cuando comprendí cómo funciona la manifestación mi vida cambió', author: 'Adrià Solà Pastor', area: 'personal' },
-  { title: 'Cómo cambiar tu vida en 6 meses: desaparecé y conseguí tu vida ideal', author: 'Adrià Solà Pastor', area: 'personal' },
-  { title: 'Millonario te explica en 10 minutos cómo organizar tu día', author: 'Darío Carrasco', area: 'personal' },
-  { title: 'Cómo arruinar tu juventud en 10 pasos', author: '', area: 'personal' },
 ];
 
 export const CoursesView: React.FC<{ life: LifeApi }> = ({ life }) => {
@@ -40,15 +25,30 @@ export const CoursesView: React.FC<{ life: LifeApi }> = ({ life }) => {
   const seen = courses.filter((c) => c.status === 'visto').length;
 
   const importNotion = () => {
-    const existing = new Set(courses.map((c) => c.title.toLowerCase()));
+    const byTitle = new Map(courses.map((c) => [c.title.toLowerCase(), c]));
     const now = nowIso();
-    let n = 0;
-    NOTION_COURSES.forEach((c) => {
-      if (existing.has(c.title.toLowerCase())) return;
-      life.upsert('courses', { id: newId('course'), title: c.title, author: c.author || undefined, area: c.area, status: 'visto', ideas: '', actions: [], createdAt: now, updatedAt: now });
-      n++;
+    let added = 0;
+    let updated = 0;
+    COURSE_LIBRARY.forEach((c) => {
+      const extra = {
+        url: c.youtubeId ? `https://www.youtube.com/watch?v=${c.youtubeId}` : undefined,
+        summary: c.summary,
+        keyIdeas: c.keyIdeas,
+        suggested: c.actions,
+        minutes: c.minutes ?? undefined,
+      };
+      const existing = byTitle.get(c.title.toLowerCase());
+      if (existing) {
+        if (!existing.summary || !existing.url) {
+          life.upsert('courses', { ...existing, ...extra, url: existing.url || extra.url, updatedAt: now });
+          updated++;
+        }
+        return;
+      }
+      life.upsert('courses', { id: newId('course'), title: c.title, author: c.author || undefined, area: c.area, status: 'por_ver', ideas: '', actions: [], ...extra, createdAt: now, updatedAt: now });
+      added++;
     });
-    showToast(n ? `Traje ${n} cursos de Notion` : 'Ya estaban todos', { type: 'success' });
+    showToast(added || updated ? `Listo: ${added} nuevos y ${updated} con su video y resumen` : 'Ya estaban todos', { type: 'success' });
   };
 
   return (
@@ -102,7 +102,25 @@ export const CoursesView: React.FC<{ life: LifeApi }> = ({ life }) => {
               const st = STATUS.find((s) => s.id === c.status)!;
               const area = LIFE_AREAS.find((a) => a.id === c.area);
               return (
-                <button key={c.id} type="button" onClick={() => setEdit(c)} className="text-left p-4 rounded-[22px] bg-surface border border-subtle shadow-card hover:border-app cursor-pointer space-y-2">
+                <button key={c.id} type="button" onClick={() => setEdit(c)} className="text-left p-3 rounded-[22px] bg-surface border border-subtle shadow-card hover:border-app cursor-pointer space-y-2">
+                  {youtubeIdFrom(c.url || (findLibraryCourse(c.title)?.youtubeId ? `https://youtu.be/${findLibraryCourse(c.title)!.youtubeId}` : '')) && (
+                    <div className="relative aspect-video rounded-2xl overflow-hidden bg-surface-elevated">
+                      <img
+                        src={`https://i.ytimg.com/vi/${youtubeIdFrom(c.url || `https://youtu.be/${findLibraryCourse(c.title)?.youtubeId}`)}/hqdefault.jpg`}
+                        alt=""
+                        loading="lazy"
+                        className="w-full h-full object-cover"
+                      />
+                      <span className="absolute inset-0 flex items-center justify-center">
+                        <span className="w-12 h-12 rounded-full bg-black/55 backdrop-blur flex items-center justify-center text-white">
+                          <Play className="w-5 h-5 fill-current" />
+                        </span>
+                      </span>
+                      {(c.minutes || findLibraryCourse(c.title)?.minutes) && (
+                        <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded-full bg-black/65 text-white text-[11px] font-mono">{c.minutes || findLibraryCourse(c.title)?.minutes} min</span>
+                      )}
+                    </div>
+                  )}
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ color: st.color, backgroundColor: `color-mix(in srgb, ${st.color} 14%, transparent)` }}>
                       {st.label}
@@ -145,11 +163,19 @@ const CourseModal: React.FC<{ life: LifeApi; initial: Partial<Course>; onClose: 
   const [actionText, setActionText] = useState('');
   const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF({ ...f, [k]: v });
   const id = initial.id || newId('course');
+  const lib = findLibraryCourse(f.title);
+  const ytId = youtubeIdFrom(f.url) || lib?.youtubeId || null;
+  const summary = initial.summary || lib?.summary;
+  const keyIdeas = initial.keyIdeas?.length ? initial.keyIdeas : lib?.keyIdeas || [];
+  const suggested = initial.suggested?.length ? initial.suggested : lib?.actions || [];
+  const [showData, setShowData] = useState(!initial.id);
+  const [play, setPlay] = useState(false);
 
   const persist = (acts = actions, status = f.status) => {
     if (!f.title.trim()) return;
     const now = nowIso();
     life.upsert('courses', {
+      ...(initial as Course),
       id,
       title: f.title.trim(),
       author: f.author.trim() || undefined,
@@ -229,24 +255,92 @@ const CourseModal: React.FC<{ life: LifeApi; initial: Partial<Course>; onClose: 
         </>
       }
     >
-      <Field label="Título">
-        <input className={inputCls} value={f.title} onChange={(e) => set('title', e.target.value)} />
-      </Field>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <Field label="Autor / canal">
-          <input className={inputCls} value={f.author} onChange={(e) => set('author', e.target.value)} />
-        </Field>
-        <Field label="Link">
-          <div className="flex gap-2">
-            <input className={inputCls} value={f.url} onChange={(e) => set('url', e.target.value)} placeholder="https://youtube.com/…" inputMode="url" />
-            {f.url && (
-              <a href={f.url} target="_blank" rel="noreferrer" className={`${btnSecondary} shrink-0`} aria-label="Abrir link">
-                <ExternalLink className="w-4 h-4" />
-              </a>
-            )}
+      {ytId && (
+        <div className="relative aspect-video rounded-2xl overflow-hidden bg-black -mx-1">
+          {play ? (
+            <iframe
+              className="absolute inset-0 w-full h-full"
+              src={`https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&rel=0&playsinline=1`}
+              title={f.title}
+              allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+              allowFullScreen
+            />
+          ) : (
+            <button type="button" onClick={() => setPlay(true)} className="absolute inset-0 w-full h-full cursor-pointer group" aria-label={`Ver el video: ${f.title}`}>
+              <img src={`https://i.ytimg.com/vi/${ytId}/hqdefault.jpg`} alt="" className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition" />
+              <span className="absolute inset-0 flex items-center justify-center">
+                <span className="w-16 h-16 rounded-full bg-[#ff0033] text-white flex items-center justify-center shadow-xl">
+                  <Play className="w-7 h-7 fill-current ml-1" />
+                </span>
+              </span>
+              {(initial.minutes || lib?.minutes) && (
+                <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded-full bg-black/70 text-white text-xs font-mono flex items-center gap-1">
+                  <Clock className="w-3 h-3" /> {initial.minutes || lib?.minutes} min
+                </span>
+              )}
+            </button>
+          )}
+        </div>
+      )}
+
+      {f.author && <div className="text-sm text-muted -mt-1">{f.author}</div>}
+
+      {summary && (
+        <div className="space-y-3">
+          <p className="text-[15px] text-main leading-relaxed">{summary}</p>
+          {keyIdeas.length > 0 && (
+            <div>
+              <div className="text-[11px] font-mono uppercase tracking-[0.12em] text-dim mb-2">Ideas clave</div>
+              <ol className="space-y-2">
+                {keyIdeas.map((k, i) => (
+                  <li key={i} className="flex gap-2.5 text-sm text-main leading-snug">
+                    <span className="w-5 h-5 shrink-0 rounded-full bg-section-subtle text-section text-[11px] font-bold flex items-center justify-center mt-px">{i + 1}</span>
+                    <span>{k}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="p-4 rounded-2xl bg-surface-elevated space-y-3">
+        <div className="flex items-center gap-2 text-sm font-semibold text-main">
+          <Sparkles className="w-4 h-4 text-accent" /> Aplicalo: nota → acción
+        </div>
+        {suggested.length > 0 ? (
+          <div className="space-y-1.5">
+            <p className="text-xs text-muted">Tocá una idea para usarla, o escribí la tuya:</p>
+            {suggested.map((a, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setActionText(a)}
+                className={`w-full text-left text-sm px-3 py-2 rounded-xl border cursor-pointer transition ${actionText === a ? 'border-accent bg-accent-subtle text-main' : 'border-app text-main hover:border-[var(--text-dim)]'}`}
+              >
+                {a}
+              </button>
+            ))}
           </div>
-        </Field>
+        ) : (
+          <p className="text-xs text-muted">¿Qué vas a hacer distinto por lo que aprendiste? Convertilo en una tarea de hoy o en un hábito.</p>
+        )}
+        <input className={inputCls} value={actionText} onChange={(e) => setActionText(e.target.value)} placeholder="Ej: armar el presupuesto 60/20/10/10" aria-label="Acción" />
+        <div className="flex gap-2">
+          <button type="button" className={`${btnSecondary} flex-1`} disabled={!actionText.trim() || !f.title.trim()} onClick={() => toAction('task')}>
+            <ListTodo className="w-4 h-4" /> Tarea para hoy
+          </button>
+          <button type="button" className={`${btnSecondary} flex-1`} disabled={!actionText.trim() || !f.title.trim()} onClick={() => toAction('habit')}>
+            <Repeat className="w-4 h-4" /> Hábito
+          </button>
+        </div>
+        {actions.map((a) => (
+          <div key={a.id} className="flex items-center gap-2 text-sm text-main">
+            <CheckCircle2 className="w-4 h-4 text-[var(--mint)] shrink-0" /> {a.kind === 'task' ? 'Tarea' : 'Hábito'}: {a.text}
+          </div>
+        ))}
       </div>
+
       <Field label="Estado" group>
         <div className="flex flex-wrap gap-1.5">
           {STATUS.map((s) => (
@@ -256,39 +350,44 @@ const CourseModal: React.FC<{ life: LifeApi; initial: Partial<Course>; onClose: 
           ))}
         </div>
       </Field>
-      <Field label="Área" group>
-        <div className="flex flex-wrap gap-1.5">
-          {LIFE_AREAS.map((a) => (
-            <Chip key={a.id} active={f.area === a.id} color={a.color} onClick={() => set('area', a.id)}>
-              {a.emoji} {a.label}
-            </Chip>
-          ))}
-        </div>
-      </Field>
-      <Field label="Las 3 ideas clave">
-        <textarea rows={3} className={textareaCls} value={f.ideas} onChange={(e) => set('ideas', e.target.value)} placeholder={'1. …\n2. …\n3. …'} />
+      <Field label="Mis notas">
+        <textarea rows={3} className={textareaCls} value={f.ideas} onChange={(e) => set('ideas', e.target.value)} placeholder="Lo que te quedó resonando" />
       </Field>
 
-      <div className="p-4 rounded-2xl bg-surface-elevated space-y-3">
-        <div className="flex items-center gap-2 text-sm font-semibold text-main">
-          <Sparkles className="w-4 h-4 text-accent" /> Nota → acción
-        </div>
-        <p className="text-xs text-muted">¿Qué vas a hacer distinto por lo que aprendiste? Convertilo en una tarea de hoy o en un hábito.</p>
-        <input className={inputCls} value={actionText} onChange={(e) => setActionText(e.target.value)} placeholder="Ej: armar el presupuesto 60/20/10/10" aria-label="Acción" />
-        <div className="flex gap-2">
-          <button type="button" className={`${btnSecondary} flex-1`} disabled={!actionText.trim() || !f.title.trim()} onClick={() => toAction('task')}>
-            <ListTodo className="w-4 h-4" /> Tarea
-          </button>
-          <button type="button" className={`${btnSecondary} flex-1`} disabled={!actionText.trim() || !f.title.trim()} onClick={() => toAction('habit')}>
-            <Repeat className="w-4 h-4" /> Hábito
-          </button>
-        </div>
-        {actions.map((a) => (
-          <div key={a.id} className="flex items-center gap-2 text-sm text-main">
-            <CheckCircle2 className="w-4 h-4 text-[var(--mint)]" /> {a.kind === 'task' ? 'Tarea' : 'Hábito'}: {a.text}
+      <button type="button" className="flex items-center gap-1.5 text-sm font-semibold text-muted cursor-pointer" onClick={() => setShowData(!showData)}>
+        <ChevronDown className={`w-4 h-4 transition ${showData ? 'rotate-180' : ''}`} /> Datos del curso
+      </button>
+      {showData && (
+        <div className="space-y-4">
+          <Field label="Título">
+            <input className={inputCls} value={f.title} onChange={(e) => set('title', e.target.value)} />
+          </Field>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Field label="Autor / canal">
+              <input className={inputCls} value={f.author} onChange={(e) => set('author', e.target.value)} />
+            </Field>
+            <Field label="Link (YouTube u otro)">
+              <div className="flex gap-2">
+                <input className={inputCls} value={f.url} onChange={(e) => set('url', e.target.value)} placeholder="https://youtube.com/…" inputMode="url" />
+                {f.url && (
+                  <a href={f.url} target="_blank" rel="noreferrer" className={`${btnSecondary} shrink-0`} aria-label="Abrir link">
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                )}
+              </div>
+            </Field>
           </div>
-        ))}
-      </div>
+          <Field label="Área" group>
+            <div className="flex flex-wrap gap-1.5">
+              {LIFE_AREAS.map((a) => (
+                <Chip key={a.id} active={f.area === a.id} color={a.color} onClick={() => set('area', a.id)}>
+                  {a.emoji} {a.label}
+                </Chip>
+              ))}
+            </div>
+          </Field>
+        </div>
+      )}
     </Modal>
   );
 };
