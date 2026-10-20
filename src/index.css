@@ -166,3 +166,12 @@ input[type='date'], input[type='time'] { color-scheme: inherit; }
     transition-duration: 0.001ms !important;
   }
 }
+
+/* iPhone: los campos con letra < 16px hacen zoom al tocarlos y descuadran los pop-ups */
+@media (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}

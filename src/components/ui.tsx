@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { getArea } from '../types/life';
 
@@ -122,7 +123,8 @@ export const Modal: React.FC<{
   }, [open, onClose]);
 
   if (!open) return null;
-  return (
+  // portal al body: si no, un contenedor con transform/animación lo encierra y la barra de abajo lo tapa
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
@@ -133,7 +135,7 @@ export const Modal: React.FC<{
       }}
     >
       <div
-        className={`w-full ${wide ? 'sm:max-w-2xl' : 'sm:max-w-lg'} bg-surface border border-app rounded-t-[30px] sm:rounded-[30px] shadow-2xl text-main max-h-[92vh] flex flex-col safe-bottom animate-rise`}
+        className={`w-full ${wide ? 'sm:max-w-2xl' : 'sm:max-w-lg'} bg-surface border border-app rounded-t-[30px] sm:rounded-[30px] shadow-2xl text-main max-h-[92vh] max-h-[92dvh] flex flex-col safe-bottom animate-rise`}
       >
         <div className="sm:hidden mx-auto mt-2.5 h-1.5 w-10 rounded-full bg-surface-muted" />
         <div className="flex items-start justify-between gap-3 px-5 sm:px-6 pt-4 sm:pt-6 pb-3">
@@ -145,10 +147,11 @@ export const Modal: React.FC<{
             <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="px-5 sm:px-6 pb-5 overflow-y-auto space-y-4">{children}</div>
+        <div className="px-5 sm:px-6 pb-5 overflow-y-auto overscroll-contain space-y-4">{children}</div>
         {footer && <div className="px-5 sm:px-6 py-4 border-t border-subtle flex flex-wrap justify-end gap-2">{footer}</div>}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

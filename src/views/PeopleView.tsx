@@ -326,6 +326,9 @@ const PersonSheet: React.FC<{
             {p.contactEveryDays ? ` · meta cada ${p.contactEveryDays} d` : ''}
           </div>
           {nb && <div className="text-xs text-muted">🎂 {formatArgentineDate(nb.date).replace(/ de \d{4}$/, '')} · {nb.inDays === 0 ? '¡hoy!' : `en ${nb.inDays} días`}</div>}
+          <button type="button" className="inline-flex items-center gap-1.5 mt-1 px-3 py-1.5 rounded-full border border-app text-xs font-semibold text-main hover:border-accent cursor-pointer" onClick={onEdit}>
+            <Pencil className="w-3.5 h-3.5" /> Editar
+          </button>
         </div>
       </div>
 
