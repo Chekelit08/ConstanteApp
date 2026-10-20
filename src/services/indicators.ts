@@ -6,7 +6,7 @@ import { Habit, HabitLog, LifeStore } from '../types/life';
 import { habitValue, isDone } from '../utils/habits';
 import { addDays, getTodayDateString, getWeekDays } from '../utils/dateUtils';
 import { computeMonth, goalProgress } from '../views/FinanceView';
-import { contactStatus } from '../views/PeopleView';
+import { contactStatus } from '../utils/people';
 import { screenStreak } from '../views/TimeView';
 import { currentMonthKey, formatCompactArs, formatDuration, formatMoney, isoToLocalDate, pct, txArs } from '../utils/lifeUtils';
 

@@ -2,6 +2,7 @@ import { DEFAULT_REMINDERS, EVAL_TYPE_LABEL, LifeStore } from '../types/life';
 import { addDays, getMondayIndexedDay, getTodayDateString, parseDateString } from '../utils/dateUtils';
 import { eventOccursOn, minutesToTime, timeToMinutes } from '../utils/lifeUtils';
 import { dayCompletion } from '../utils/habits';
+import { peopleToCare } from '../utils/people';
 import { getVerseForDate } from './verses';
 import type { FeedEvent } from './calendarFeeds';
 import type { PushReminder } from './push';
@@ -90,6 +91,12 @@ export function buildReminders(store: LifeStore, external: FeedEvent[]): PushRem
       Object.values(store.people)
         .filter((p) => p.birthday === date.slice(5))
         .forEach((p) => add({ fireAt: at(date, r.morningTime), title: `🎂 Hoy cumple ${p.name}`, body: 'Mandale un mensaje 💬', url: '/?s=people', tag: `bday-${p.id}-${date}` }));
+    }
+
+    if (r.people) {
+      const top = peopleToCare(Object.values(store.people), Object.values(store.interactions), date, 1)[0];
+      if (top && !top.reason.startsWith('🎂'))
+        add({ fireAt: at(date, r.morningTime), title: `🤍 Hoy, cuidá a ${top.p.name}`, body: top.reason, url: '/?s=people', tag: `care-${date}` });
     }
 
     // hábitos: si hoy ya completaste todo, no molesta

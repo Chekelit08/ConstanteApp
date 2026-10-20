@@ -13,7 +13,7 @@ import { dayCompletion, habitsForDate, habitValue, isDone, streak, weekCount } f
 import { currentMonthKey, daysBetween, formatCompactArs, formatDuration, nowIso, nowTimeAR, pct, timeToMinutes } from '../utils/lifeUtils';
 import { computeMonth, goalProgress } from './FinanceView';
 import { routineCompletion } from './TimeView';
-import { contactStatus } from './PeopleView';
+import { contactStatus } from '../utils/people';
 import { EVAL_TYPE_LABEL, Habit } from '../types/life';
 import { Card, ProgressBar, Ring } from '../components/ui';
 import { TaskList } from '../components/TaskList';

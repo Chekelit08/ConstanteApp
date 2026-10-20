@@ -51,6 +51,7 @@ export interface Transaction {
   usdRate?: number; // cotización usada (ARS por USD) para convertir
   goalId?: string; // ahorro asignado a una meta
   debtId?: string; // pago de una deuda
+  externalId?: string; // movimiento importado (Mercado Pago…), evita duplicados
   createdAt: string;
   updatedAt: string;
 }
@@ -85,6 +86,12 @@ export interface Debt {
   updatedAt: string;
 }
 
+export interface ImportRule {
+  type: TxType;
+  category: string;
+  include: boolean;
+}
+
 export interface FinanceConfig {
   savingsPercent: number; // % del ingreso al ahorro (plan: 15%)
   funPercent: number; // % fondo de gustos (plan: 5%)
@@ -93,6 +100,7 @@ export interface FinanceConfig {
   usdRate: number; // cotización manual o traída de dolarapi
   usdRateSource?: string;
   usdRateUpdatedAt?: string;
+  importRules?: Record<string, ImportRule>; // lo que aprendió el importador de tus correcciones
   salaryGoalStart: number;
   salaryGoalEnd: number;
   categoryBudgets: Record<string, number>; // tope mensual ARS por categoría de gasto
@@ -418,7 +426,10 @@ export interface Person {
   emoji?: string;
   birthday?: string; // MM-DD
   contactEveryDays?: number;
+  phone?: string;
   prayFor?: string;
+  cares?: string; // lo que le importa / para acordarme
+  gifts?: string; // ideas de regalo
   notes?: string;
   createdAt: string;
   updatedAt: string;
@@ -627,6 +638,7 @@ export interface ReminderPrefs {
   evaluations: boolean; // la noche anterior y 2 h antes
   tasks: boolean; // a la mañana del día que vencen
   birthdays: boolean;
+  people?: boolean; // "hoy, cuidá a…"
   habits: boolean; // si faltan hábitos a la noche
   habitsTime: string;
   closeDay: boolean;
@@ -641,6 +653,7 @@ export const DEFAULT_REMINDERS: ReminderPrefs = {
   evaluations: true,
   tasks: true,
   birthdays: true,
+  people: true,
   habits: true,
   habitsTime: '21:00',
   closeDay: true,

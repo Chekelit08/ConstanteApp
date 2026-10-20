@@ -153,6 +153,9 @@ export const RemindersCard: React.FC<{ life: LifeApi }> = ({ life }) => {
             <Row title="🎂 Cumpleaños" hint="A la mañana">
               <Switch label="Cumpleaños" on={r.birthdays} onChange={(v) => setR({ birthdays: v })} />
             </Row>
+            <Row title="🤍 Hoy, cuidá a…" hint="A quién escribirle según tus metas de contacto">
+              <Switch label="Personas" on={r.people !== false} onChange={(v) => setR({ people: v })} />
+            </Row>
             <Row title="☀️ Hora de los avisos de la mañana">
               <input type="time" aria-label="Hora de la mañana" className={timeCls} value={r.morningTime} onChange={(e) => setR({ morningTime: e.target.value })} />
             </Row>

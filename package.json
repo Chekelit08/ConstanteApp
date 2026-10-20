@@ -14,8 +14,10 @@
     "@vitejs/plugin-react": "^6.1.1",
     "firebase": "^13.0.0",
     "lucide-react": "^0.546.0",
+    "pdfjs-dist": "^4.10.38",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
+    "read-excel-file": "^5.8.8",
     "tailwindcss": "^4.3.3",
     "vite": "^8.3.0",
     "vite-plugin-pwa": "^2.0.0"

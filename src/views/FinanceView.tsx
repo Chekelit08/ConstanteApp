@@ -17,6 +17,7 @@ import {
   Wallet,
 } from 'lucide-react';
 import { LifeApi } from '../hooks/useLifeData';
+import { BankImportModal } from '../components/BankImport';
 import {
   Currency,
   Debt,
@@ -156,6 +157,7 @@ export const FinanceView: React.FC<{ life: LifeApi }> = ({ life }) => {
   const [tab, setTab] = useState<FinTab>('summary');
   const [month, setMonth] = useState(currentMonthKey());
   const [txModal, setTxModal] = useState<{ open: boolean; tx?: Partial<Transaction> }>({ open: false });
+  const [importOpen, setImportOpen] = useState(false);
   const { showToast } = useToast();
   const [loadingRate, setLoadingRate] = useState(false);
 
@@ -193,6 +195,9 @@ export const FinanceView: React.FC<{ life: LifeApi }> = ({ life }) => {
         subtitle={'"¿Quién de vosotros, queriendo edificar una torre, no se sienta primero y calcula los gastos?" — Lucas 14:28'}
         actions={
           <>
+            <button type="button" className={btnSecondary} onClick={() => setImportOpen(true)} title="Importar movimientos de Mercado Pago">
+              <span className="w-4 h-4 rounded-full bg-[#00b1ea] text-white text-[9px] font-black flex items-center justify-center">MP</span> Importar
+            </button>
             <button type="button" className={btnSecondary} onClick={() => setTxModal({ open: true, tx: { type: 'expense' } })}>
               <ArrowDownCircle className="w-4 h-4" /> Gasto
             </button>
@@ -238,6 +243,7 @@ export const FinanceView: React.FC<{ life: LifeApi }> = ({ life }) => {
       {tab === 'analysis' && <AnalysisTab txs={txs} cfg={cfg} rate={rate} />}
       {tab === 'plan' && <PlanTab life={life} cfg={cfg} refreshRate={refreshRate} loadingRate={loadingRate} />}
 
+      {importOpen && <BankImportModal life={life} onClose={() => setImportOpen(false)} />}
       {txModal.open && <TxModal life={life} initial={txModal.tx} goals={goals} debts={debts} onClose={() => setTxModal({ open: false })} />}
     </div>
   );

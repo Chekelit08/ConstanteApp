@@ -28,7 +28,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
-        globIgnores: ['push-sw.js'],
+        globIgnores: ['push-sw.js', '**/pdf.worker*'],
         importScripts: ['/push-sw.js'],
         navigateFallbackDenylist: [/^\/api\//],
         runtimeCaching: [
